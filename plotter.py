@@ -7,7 +7,7 @@ import matplotlib
 matplotlib.use('Agg')
 import numpy as np
 import matplotlib.ticker as ticker
-
+import io
 
 class Plotter:
     def __init__(self, x, y, title, xlabel='', ylabel='', no_data_error=''):
@@ -50,12 +50,8 @@ class Plotter:
         blue = 0.0
         #blue = 120/255
         for i in range(len(color_samples)):
-
-            
-
             if i != (len(color_samples) - 1):
                 c_gradient = (color_samples[dict_keys[i+1]] - color_samples[dict_keys[i]]) / (color_samples[dict_keys[i]])
-                
                 red -= c_gradient*plot_gradient_intensity
                 green += c_gradient*plot_gradient_intensity
 
@@ -77,13 +73,6 @@ class Plotter:
 
             else:
                 ax.plot(self.x[dict_keys[i]:], self.y[dict_keys[i]:], color=[red, green, blue])
-            
-
-
-
-    
-
-        # ax.plot(self.x, self.y, c='green')
         
         ax.set_title(self.title, fontfamily='serif', fontsize=12, fontweight='bold')
         ax.set_xlabel(self.xlabel, fontfamily='serif', fontsize=7, fontweight='bold')
@@ -117,17 +106,17 @@ class Plotter:
         date = datetime.datetime.strptime(date_str, "%Y-%m-%d %H:%M:%S")
         return date.strftime("%y-%m-%d")  # Format the date as yy-mm-dd
     
-    def save_plot(self, filename):
-        filepath = os.path.join('static', 'image', filename+'.png')  # Use forward slashes in the file path
-        
+    def save_plot(self):
         fig = self.generate_plot()  # Generate the plot
 
-        fig.savefig(filepath, format='png')
+        # Save the plot to a BytesIO object
+        image_stream = io.BytesIO()
+        fig.savefig(image_stream, format='png')
         plt.close(fig)
 
-        with open(filepath, 'rb') as image_file:
-            # Read the saved image file
-            image_data = image_file.read()
+        # Retrieve the image data from the BytesIO object
+        image_stream.seek(0)
+        image_data = image_stream.getvalue()
 
         # Convert the image to a base64-encoded string
         image_base64 = base64.b64encode(image_data).decode('utf-8')
