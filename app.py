@@ -228,10 +228,10 @@ def update_plot():
                 no_data_error = f"Last update {no_data_dict[str(client)]}"
             else:
                 no_data_error = None
-                
+
             plt_title = f'{client}, Lounge {actives}/{actives + inactives}, AP No. {airport_num}'
             pltr = Plotter(date_list, vol_sum_list, plt_title , 'Date', 'Passebgers Rate', no_data_error=no_data_error)
-            image_info = pltr.save_plot(f'{client}')  
+            image_info = pltr.save_plot()  
 
             image_list.append(image_info)
 
