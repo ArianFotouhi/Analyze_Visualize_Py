@@ -10,6 +10,7 @@ matplotlib.use('Agg')
 import numpy as np
 import matplotlib.cm as cm
 from matplotlib.collections import LineCollection
+import matplotlib.ticker as ticker
 
 class Plotter:
     def __init__(self, x, y, title, xlabel='', ylabel='', no_data_error=''):
@@ -20,20 +21,40 @@ class Plotter:
         self.ylabel = ylabel
         self.no_data_error = no_data_error
     
+    def calculate_growth_percentage(self):
+        # Calculate the growth percentage of the last two points of y
+        if len(self.y) >= 2:
+            growth_percentage = ((self.y[-1] - self.y[-2]) / self.y[-2]) * 100
+            return growth_percentage
+        else:
+            return None
+
     def generate_plot(self):
         fig, ax = plt.subplots()  # Create a new Figure and Axes object
         ax.plot(self.x, self.y, color='green')
         
-        ax.set_title(self.title, fontfamily='serif', fontsize=12, fontweight='bold')  # Make the title bold
-        ax.set_xlabel(self.xlabel, fontfamily='serif', fontsize=8, fontweight='bold')  # Make the xlabel bold
-        ax.set_ylabel(self.ylabel, fontfamily='serif', fontsize=10, fontweight='bold')  # Make the ylabel bold
+        ax.set_title(self.title, fontfamily='serif', fontsize=12, fontweight='bold')
+        ax.set_xlabel(self.xlabel, fontfamily='serif', fontsize=7, fontweight='bold')
+        ax.set_ylabel(self.ylabel, fontfamily='serif', fontsize=10, fontweight='bold')
 
-        ax.set_xticklabels(ax.get_xticks(), fontweight='bold', fontsize=7)  # Make xticklabels bold
-        ax.set_yticklabels(ax.get_yticks(), fontweight='bold', fontsize=7)  # Make yticklabels bold
+        ax.set_xticklabels(ax.get_xticks(), fontweight='bold', fontsize=7)
+
+        # Format y-axis tick labels as integers
+        ax.yaxis.set_major_formatter(ticker.FuncFormatter(lambda y, _: '{:.0f}'.format(y)))
 
         if self.no_data_error:
             ax.text(0.5, 0.2, self.no_data_error, horizontalalignment='center', verticalalignment='center',
                     transform=ax.transAxes, color='red', fontsize=12, fontweight='bold')
+        
+        growth_percentage = self.calculate_growth_percentage()
+        if growth_percentage is not None:
+            text = f"Growth: {growth_percentage:.2f}%"
+            color = 'green' if growth_percentage > 0 else 'red'
+            marker = '▲' if growth_percentage > 0 else '▼'
+            ax.text(0.95, 0.05, marker+text, horizontalalignment='right', verticalalignment='bottom',
+                    transform=ax.transAxes, color=color, fontsize=10, fontweight='bold')
+            # ax.text(0.94, 0.05, marker, horizontalalignment='right', verticalalignment='bottom',
+            #         transform=ax.transAxes, color=color, fontsize=10, fontweight='bold')
 
         return fig
     
