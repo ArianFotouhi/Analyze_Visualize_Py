@@ -1,15 +1,10 @@
 import datetime
 import os
 import matplotlib.pyplot as plt
-import io
 import base64
-
 import matplotlib
 matplotlib.use('Agg')
-
 import numpy as np
-import matplotlib.cm as cm
-from matplotlib.collections import LineCollection
 import matplotlib.ticker as ticker
 
 class Plotter:
@@ -31,14 +26,18 @@ class Plotter:
 
     def generate_plot(self):
         fig, ax = plt.subplots()  # Create a new Figure and Axes object
-        ax.plot(self.x, self.y, color='green')
+        ax.plot(self.x, self.y, c='green')
         
         ax.set_title(self.title, fontfamily='serif', fontsize=12, fontweight='bold')
         ax.set_xlabel(self.xlabel, fontfamily='serif', fontsize=7, fontweight='bold')
         ax.set_ylabel(self.ylabel, fontfamily='serif', fontsize=10, fontweight='bold')
 
-        ax.set_xticks(np.arange(len(self.x)))  # Set the x-axis tick locations
-        ax.set_xticklabels(self.x, rotation='vertical', fontsize=6)  # Set the x-axis tick labels
+        num_xlabels = min(len(self.x), 5)  # Get the minimum between the number of x-labels and 5
+        x_indices = np.linspace(0, len(self.x) - 1, num_xlabels, dtype=int)  # Generate evenly spaced indices
+        x_labels = [self.format_date(self.x[i]) for i in x_indices]  # Get the corresponding formatted x-labels
+     
+        ax.set_xticks(x_indices)  # Set the x-axis tick locations
+        ax.set_xticklabels(x_labels, rotation='vertical', fontsize=6)  # Set the x-axis tick labels
         
         # Format y-axis tick labels as integers
         ax.yaxis.set_major_formatter(ticker.FuncFormatter(lambda y, _: '{:.0f}'.format(y)))
@@ -63,7 +62,6 @@ class Plotter:
     
     def save_plot(self, filename):
         filepath = os.path.join('static', 'image', filename+'.png')  # Use forward slashes in the file path
-        print('filepath:', filepath) 
         
         fig = self.generate_plot()  # Generate the plot
 
