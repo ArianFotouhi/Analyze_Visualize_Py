@@ -37,8 +37,9 @@ class Plotter:
         ax.set_xlabel(self.xlabel, fontfamily='serif', fontsize=7, fontweight='bold')
         ax.set_ylabel(self.ylabel, fontfamily='serif', fontsize=10, fontweight='bold')
 
-        ax.set_xticklabels(ax.get_xticks(), fontweight='bold', fontsize=7)
-
+        ax.set_xticks(np.arange(len(self.x)))  # Set the x-axis tick locations
+        ax.set_xticklabels(self.x, rotation='vertical', fontsize=6)  # Set the x-axis tick labels
+        
         # Format y-axis tick labels as integers
         ax.yaxis.set_major_formatter(ticker.FuncFormatter(lambda y, _: '{:.0f}'.format(y)))
 
@@ -51,10 +52,8 @@ class Plotter:
             text = f"Growth: {growth_percentage:.2f}%"
             color = 'green' if growth_percentage > 0 else 'red'
             marker = '▲' if growth_percentage > 0 else '▼'
-            ax.text(0.95, 0.05, marker+text, horizontalalignment='right', verticalalignment='bottom',
+            ax.text(0.95, 0.05, marker+' '+text, horizontalalignment='right', verticalalignment='bottom',
                     transform=ax.transAxes, color=color, fontsize=10, fontweight='bold')
-            # ax.text(0.94, 0.05, marker, horizontalalignment='right', verticalalignment='bottom',
-            #         transform=ax.transAxes, color=color, fontsize=10, fontweight='bold')
 
         return fig
     
@@ -68,10 +67,6 @@ class Plotter:
         
         fig = self.generate_plot()  # Generate the plot
 
-        # Format the x-axis labels as dates without time if no_date is False
-        x_labels = [self.format_date(date) for date in self.x]
-        fig.axes[0].set_xticklabels(x_labels, rotation='vertical', fontsize=7)  # Adjust rotation and fontsize
-        
         fig.savefig(filepath, format='png')
         plt.close(fig)
 
