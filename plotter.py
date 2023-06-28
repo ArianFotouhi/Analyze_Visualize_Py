@@ -30,7 +30,7 @@ class Plotter:
 
         y_length = len(self.y)
         color_samples = {}
-        num_samples = 20
+        num_samples = 15
 
         if y_length <= num_samples:
             for i, rate in enumerate(self.y):
@@ -41,37 +41,41 @@ class Plotter:
             for i in range(num_samples):
                 selected_index = stride * i + index
                 color_samples[selected_index] = self.y[selected_index]
-        print('color_samples_num', color_samples)
 
         dict_keys = sorted(color_samples.keys())
-        print('dict_keys', dict_keys)
 
-        x = 0.0
+        red = 0.0
+        green = 187/255
+        blue = 0.0
+        #blue = 120/255
         for i in range(len(color_samples)):
 
             
 
             if i != (len(color_samples) - 1):
-                c_gradient = (color_samples[i+1] - color_samples[i]) / (color_samples[i])
-                print('c_gradient', c_gradient) 
+                c_gradient = (color_samples[dict_keys[i+1]] - color_samples[dict_keys[i]]) / (color_samples[dict_keys[i]])
                 
-                x -= c_gradient*plot_gradient_intensity
+                red -= c_gradient*plot_gradient_intensity
+                green += c_gradient*plot_gradient_intensity
 
-                if x <0:
-                    x = 0
-                elif x > 1.0:
-                    x = 1.0
+                if red <0:
+                    red = 0
+                elif red > 1.0:
+                    red = 1.0
+
+                if green < 0:
+                    green = 0
+                elif green > 1.0:
+                    green = 1.0
 
                 ax.plot(
                     self.x[dict_keys[i]: dict_keys[i + 1] + 1],
                     self.y[dict_keys[i]: dict_keys[i + 1] + 1],
-                    color=[x, 187/255, 120/255]
+                    color=[red, green, blue]
                 )
 
             else:
-                ax.plot(self.x[dict_keys[i]:], self.y[dict_keys[i]:], color=[x, 187/255, 120/255])
-                print('x range', self.x[dict_keys[i]:])
-                print('y range', self.y[dict_keys[i]:])
+                ax.plot(self.x[dict_keys[i]:], self.y[dict_keys[i]:], color=[red, green, blue])
             
 
 
