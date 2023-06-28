@@ -15,6 +15,7 @@ time_alert = 20
 crowdedness_alert = 18
 plot_interval = 10
 
+plot_gradient_intensity = 5
 
 
 users = {
