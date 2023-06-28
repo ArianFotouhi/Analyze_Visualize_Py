@@ -6,6 +6,7 @@ import matplotlib
 matplotlib.use('Agg')
 import numpy as np
 import matplotlib.ticker as ticker
+from config import plot_gradient_intensity
 
 class Plotter:
     def __init__(self, x, y, title, xlabel='', ylabel='', no_data_error=''):
@@ -23,10 +24,61 @@ class Plotter:
             return growth_percentage
         else:
             return None
-
+    
     def generate_plot(self):
         fig, ax = plt.subplots()  # Create a new Figure and Axes object
-        ax.plot(self.x, self.y, c='green')
+
+        y_length = len(self.y)
+        color_samples = {}
+        num_samples = 20
+
+        if y_length <= num_samples:
+            for i, rate in enumerate(self.y):
+                color_samples[i] = rate
+        else:
+            stride = y_length // num_samples
+            index = 0
+            for i in range(num_samples):
+                selected_index = stride * i + index
+                color_samples[selected_index] = self.y[selected_index]
+        print('color_samples_num', color_samples)
+
+        dict_keys = sorted(color_samples.keys())
+        print('dict_keys', dict_keys)
+
+        x = 0.0
+        for i in range(len(color_samples)):
+
+            
+
+            if i != (len(color_samples) - 1):
+                c_gradient = (color_samples[i+1] - color_samples[i]) / (color_samples[i])
+                print('c_gradient', c_gradient) 
+                
+                x -= c_gradient*plot_gradient_intensity
+
+                if x <0:
+                    x = 0
+                elif x > 1.0:
+                    x = 1.0
+
+                ax.plot(
+                    self.x[dict_keys[i]: dict_keys[i + 1] + 1],
+                    self.y[dict_keys[i]: dict_keys[i + 1] + 1],
+                    color=[x, 187/255, 120/255]
+                )
+
+            else:
+                ax.plot(self.x[dict_keys[i]:], self.y[dict_keys[i]:], color=[x, 187/255, 120/255])
+                print('x range', self.x[dict_keys[i]:])
+                print('y range', self.y[dict_keys[i]:])
+            
+
+
+
+    
+
+        # ax.plot(self.x, self.y, c='green')
         
         ax.set_title(self.title, fontfamily='serif', fontsize=12, fontweight='bold')
         ax.set_xlabel(self.xlabel, fontfamily='serif', fontsize=7, fontweight='bold')
