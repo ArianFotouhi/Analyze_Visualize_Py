@@ -1,3 +1,4 @@
+from config import plot_gradient_intensity, num_samples_gradient
 import datetime
 import os
 import matplotlib.pyplot as plt
@@ -6,7 +7,7 @@ import matplotlib
 matplotlib.use('Agg')
 import numpy as np
 import matplotlib.ticker as ticker
-from config import plot_gradient_intensity
+
 
 class Plotter:
     def __init__(self, x, y, title, xlabel='', ylabel='', no_data_error=''):
@@ -30,7 +31,7 @@ class Plotter:
 
         y_length = len(self.y)
         color_samples = {}
-        num_samples = 15
+        num_samples = num_samples_gradient
 
         if y_length <= num_samples:
             for i, rate in enumerate(self.y):
