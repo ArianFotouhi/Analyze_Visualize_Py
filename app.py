@@ -224,7 +224,13 @@ def update_plot():
             date_list = record_lister(client_df[Date_col].dt.strftime('%Y-%m-%d %H:%M:%S').unique().tolist(), plot_interval*24)
             vol_sum_list = record_sum_calculator(client_df.groupby(Date_col)[Volume_ID_Col].sum().to_list(), plot_interval*24)
 
-            pltr = Plotter(date_list, vol_sum_list, f'{client} {actives}/{actives + inactives}, AP No. {airport_num}', 'Date', 'Passebgers Rate')
+            print('no_data_dict',no_data_dict)
+            if str(client) in list(no_data_dict.keys()):
+                no_data_error = f"Last update {no_data_dict[str(client)]}"
+            else:
+                no_data_error = None
+
+            pltr = Plotter(date_list, vol_sum_list, f'{client} {actives}/{actives + inactives}, AP No. {airport_num}', 'Date', 'Passebgers Rate', no_data_error=no_data_error)
             image_info = pltr.save_plot(f'{client}')  
 
             image_list.append(image_info)
