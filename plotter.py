@@ -1,3 +1,4 @@
+from PIL import Image
 from config import plot_gradient_intensity, num_samples_gradient
 import datetime
 import os
@@ -10,13 +11,14 @@ import matplotlib.ticker as ticker
 import io
 
 class Plotter:
-    def __init__(self, x, y, title, xlabel='', ylabel='', no_data_error=''):
+    def __init__(self, x, y, title, xlabel='', ylabel='', no_data_error='', client=''):
         self.x = x
         self.y = y
         self.title = title
         self.xlabel = xlabel
         self.ylabel = ylabel
         self.no_data_error = no_data_error
+        self.client = client
     
     def calculate_growth_percentage(self):
         # Calculate the growth percentage of the last two points of y
@@ -42,20 +44,18 @@ class Plotter:
             for i in range(num_samples):
                 selected_index = stride * i + index
                 color_samples[selected_index] = self.y[selected_index]
-
         dict_keys = sorted(color_samples.keys())
 
         red = 0.0
         green = 187/255
         blue = 0.0
-        #blue = 120/255
         for i in range(len(color_samples)):
             if i != (len(color_samples) - 1):
                 c_gradient = (color_samples[dict_keys[i+1]] - color_samples[dict_keys[i]]) / (color_samples[dict_keys[i]])
                 red -= c_gradient*plot_gradient_intensity
                 green += c_gradient*plot_gradient_intensity
 
-                if red <0:
+                if red < 0:
                     red = 0
                 elif red > 1.0:
                     red = 1.0
@@ -99,6 +99,10 @@ class Plotter:
             marker = '▲' if growth_percentage > 0 else '▼'
             ax.text(0.95, 0.05, marker+' '+text, horizontalalignment='right', verticalalignment='bottom',
                     transform=ax.transAxes, color=color, fontsize=10, fontweight='bold')
+        
+        
+        if self.client:
+            self.attach_logo(fig)  # Attach the logo to the plot
 
         return fig
     
@@ -123,3 +127,19 @@ class Plotter:
 
         # Create the JSON response
         return image_base64
+    
+    def attach_logo(self, fig):
+        logo_path = 'static/image/image.png'  # Path to your logo image
+        logo = Image.open(logo_path)
+        
+        # Resize the logo to fit in the plot
+        logo_width = fig.bbox.width * 0.15
+        logo_height = logo_width * logo.size[1] / logo.size[0]
+        logo = logo.resize((int(logo_width), int(logo_height)), Image.ANTIALIAS)
+        
+        # Calculate the position to place the logo
+        logo_x = 10
+        logo_y = fig.bbox.height - logo_height - 10
+        
+        # Overlay the logo on the plot
+        fig.figimage(logo, xo=logo_x, yo=logo_y, alpha=0.8)
