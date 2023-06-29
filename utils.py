@@ -49,8 +49,7 @@ def filter_data_by_cl(username, df, selected_client, access_clients):
     return filtered_df
 
 
-def dropdown_menu_filter(df, col_name,selected_val):
-    
+def dropdown_menu_filter(df, col_name,selected_val):    
     filtered_df = df[df[col_name] == selected_val]
 
 
@@ -307,7 +306,7 @@ def volume_rate(clients, amount=5):
     return rates, current_vol,  prev_vol
 
 
-def filter_unique_val_dict(column):
+def filter_unique_val_dict(df, column):
     if column =='lounges':
         username = session["username"]
         cl_list = users[username]["AccessCL"]
@@ -332,22 +331,20 @@ def filter_unique_val_dict(column):
         return output
     
     elif column == 'airport':
-        df = load_data()
         unqiue_vals = df[Airport_Name_Col].unique()
         
         return unqiue_vals
     
     elif column == 'city':
-        df = load_data()
         unqiue_vals = df[City_Name_Col].unique()
         
         return unqiue_vals
     
     elif column == 'country':
-        df = load_data()
         unqiue_vals = df[Country_Name_Col].unique()
     
         return unqiue_vals
+
 
 
 
