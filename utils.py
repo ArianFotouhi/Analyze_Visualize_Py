@@ -401,16 +401,16 @@ def lounge_crowdedness(date='latest', alert=crowdedness_alert):
 def get_notifications(inact_loung_num,inactive_clients,crowdedness):
     news=[]
     if inact_loung_num != 0:
-        news.append('You have inactive lounges😟')
+        news.append('Inactive lounges😟')
     if inactive_clients:
-        news.append('You have inactive clients😟')
+        news.append('Inactive clients😟')
     
     if 'open_to_accept' in crowdedness:
         if len(crowdedness['open_to_accept']) > 0:
-            news.append('There are some uncrowded lounges to offer😃')
+            news.append('Uncrowded lounges to offer😃')
     if 'very_crowded' in crowdedness:
             if len(crowdedness['very_crowded']) > 0:
-                news.append('There exists chosen by many lounges🤔')
+                news.append('Chosen by many lounges🤔')
     return news
 
 def get_latest_date_time(df):
