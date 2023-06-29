@@ -67,8 +67,8 @@ def home():
     
     setting = {'time_alert':np.arange(1,30), 'plot_interval':np.arange(1,30)}
 
-    stat_list = [act_loung_num, inact_loung_num,vol_curr, vol_prev, len(active_clients), len(inactive_clients),inactive_lounges, crowdedness, notifications]
-
+    stat_list = [act_loung_num, inact_loung_num,vol_curr, vol_prev, len(active_clients), len(inactive_clients),inactive_lounges, crowdedness]
+    print("notifications", notifications)
     
     return render_template('index.html', data= data, clients= access_clients, stats= stat_list, cl_lounges_= cl_lounges_, 
                            airports = airport_uq_list, cities = city_uq_list, countries = country_uq_list, setting=setting)
@@ -202,6 +202,11 @@ def update_plot():
         active_lounges, inactive_lounges, act_loung_num, inact_loung_num = active_inactive_lounges(access_clients)
         active_clients, inactive_clients = active_clients_percent(access_clients, active_lounges, inactive_lounges)
         volume_rates, vol_curr, vol_prev = volume_rate(access_clients, amount=7)
+        active_clients_num = int(len(active_clients))
+        inactive_clients_num = int(len(inactive_clients))
+        
+        crowdedness = lounge_crowdedness(date='latest', alert = crowdedness_alert)
+        notifications = get_notifications(inact_loung_num,inactive_clients,crowdedness)
         
         #alphabet
         #pax_rate
@@ -235,7 +240,7 @@ def update_plot():
                 no_data_error = None
 
             plt_title = f'{client}, Lounge {actives}/{actives + inactives}, AP No. {airport_num}'
-            pltr = Plotter(date_list, vol_sum_list, plt_title , 'Date', 'Passebgers Rate', no_data_error=no_data_error)
+            pltr = Plotter(date_list, vol_sum_list, plt_title , '', 'Passebgers Rate', no_data_error=no_data_error)
             image_info = pltr.save_plot()  
 
             image_list.append(image_info)
@@ -274,13 +279,14 @@ def update_plot():
 
       
         
-        active_clients_num = int(len(active_clients))
-        inactive_clients_num = int(len(inactive_clients))
+
+
     
         return jsonify({'traces': traces, 'layouts': layouts , 'errors': errors, 'image':True,
                         'lounge_act_num':act_loung_num, 'lounge_inact_num':inact_loung_num,
                         'vol_curr':int(vol_curr),'vol_prev':int(vol_prev),
-                        'active_clients_num':active_clients_num, 'inactive_clients_num':inactive_clients_num,'cl':clients, 'image_info':image_list})
+                        'active_clients_num':active_clients_num, 'inactive_clients_num':inactive_clients_num,
+                        'cl':clients, 'image_info':image_list,'notifications':notifications})
 
 
 
