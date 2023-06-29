@@ -74,16 +74,16 @@ class Plotter:
             else:
                 ax.plot(self.x[dict_keys[i]:], self.y[dict_keys[i]:], color=[red, green, blue])
         
-        ax.set_title(self.title, fontfamily='serif', fontsize=12, fontweight='bold')
+        ax.set_title(self.title, fontfamily='serif', fontsize=16, fontweight='bold')
         ax.set_xlabel(self.xlabel, fontfamily='serif', fontsize=7, fontweight='bold')
         ax.set_ylabel(self.ylabel, fontfamily='serif', fontsize=10, fontweight='bold')
 
-        num_xlabels = min(len(self.x), 5)  # Get the minimum between the number of x-labels and 5
+        num_xlabels = min(len(self.x), 3)  # Get the minimum between the number of x-labels and 5
         x_indices = np.linspace(0, len(self.x) - 1, num_xlabels, dtype=int)  # Generate evenly spaced indices
         x_labels = [self.format_date(self.x[i]) for i in x_indices]  # Get the corresponding formatted x-labels
      
         ax.set_xticks(x_indices)  # Set the x-axis tick locations
-        ax.set_xticklabels(x_labels, rotation='vertical', fontsize=6)  # Set the x-axis tick labels
+        ax.set_xticklabels(x_labels, fontsize=11)  # Set the x-axis tick labels
         
         # Format y-axis tick labels as integers
         ax.yaxis.set_major_formatter(ticker.FuncFormatter(lambda y, _: '{:.0f}'.format(y)))
