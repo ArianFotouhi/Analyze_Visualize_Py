@@ -74,9 +74,9 @@ class Plotter:
             else:
                 ax.plot(self.x[dict_keys[i]:], self.y[dict_keys[i]:], color=[red, green, blue])
         
-        ax.set_title(self.title, fontfamily='serif', fontsize=16, fontweight='bold')
-        ax.set_xlabel(self.xlabel, fontfamily='serif', fontsize=7, fontweight='bold')
-        ax.set_ylabel(self.ylabel, fontfamily='serif', fontsize=10, fontweight='bold')
+        ax.set_title(self.title, fontfamily='Roboto', fontsize=16, fontweight='bold')
+        ax.set_xlabel(self.xlabel, fontfamily='Roboto', fontsize=7, fontweight='bold')
+        ax.set_ylabel(self.ylabel, fontfamily='Roboto', fontsize=10, fontweight='bold')
 
         num_xlabels = min(len(self.x), 3)  # Get the minimum between the number of x-labels and 5
         x_indices = np.linspace(0, len(self.x) - 1, num_xlabels, dtype=int)  # Generate evenly spaced indices
