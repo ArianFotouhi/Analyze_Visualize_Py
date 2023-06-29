@@ -173,9 +173,34 @@ def update_plot():
         }
 
         layout = {
-            'title': f'{selected_client} {selected_lounge} {selected_airport} {selected_city} {selected_country}',
-            'xaxis': {'title': 'Date'},
-            'yaxis': {'title': 'Rate'}
+            'title': {
+                'text': f'{selected_client} {selected_lounge} {selected_airport} {selected_city} {selected_country}',
+                'font': {
+                    'family': 'Roboto',
+                    'weight': 'bold'
+
+                }
+            },
+            'xaxis': {
+                'title': {
+                    'text': 'Date',
+                    'font': {
+                        'family': 'Roboto',
+                        'weight': 'bold'
+
+                    }
+                }
+            },
+            'yaxis': {
+                'title': {
+                    'text': 'Rate',
+                    'font': {
+                        'family': 'Roboto',
+                        'weight': 'bold'
+
+                    }
+                }
+            }
         }
 
         
