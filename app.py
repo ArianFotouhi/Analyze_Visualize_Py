@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, session, jsonify
+from flask import Flask, render_template, request, redirect, session, jsonify, url_for
 from utils import load_data, filter_data_by_cl, dropdown_menu_filter, LoungeCounter, stream_on_off, active_inactive_lounges, active_clients_percent, volume_rate, filter_unique_val_dict, lounge_crowdedness, get_notifications, ParameterCounter, record_sum_calculator, record_lister, update_time_alert, update_plot_interval, crowdedness_alert, range_filter, order_clients
 from config import Date_col, Lounge_ID_Col, CLName_Col, Volume_ID_Col,  users, Airport_Name_Col, City_Name_Col, Country_Name_Col
 from authentication import Authentication
@@ -38,6 +38,11 @@ def home():
     if 'username' not in session:
         return redirect('/login')
 
+    client_name = request.args.get('clicked_image')
+    print('CLIENT', client_name)
+    if client_name:
+        return redirect(url_for('client', client=client_name))
+    
     df = load_data()
 
     username = session["username"]
@@ -281,6 +286,10 @@ def update_plot():
 
 @app.route('/intelligence_hub', methods=['GET'])
 def intelligence_hub():
+
+    if 'username' not in session:
+        return redirect('/login')
+    
     username = session["username"]
     access_clients = users[username]["AccessCL"]
 
@@ -295,6 +304,10 @@ def intelligence_hub():
 
 @app.route('/dormant', methods=['GET'])
 def dormant():
+
+    if 'username' not in session:
+        return redirect('/login')
+    
     username = session["username"]
     access_clients = users[username]["AccessCL"]
     active_lounges, inactive_lounges, act_loung_num, inact_loung_num = active_inactive_lounges(access_clients)
@@ -304,6 +317,18 @@ def dormant():
     
     return render_template('dormant.html', clients= access_clients, stats= stat_list)
 
+@app.route('/client/<client>', methods=['GET'])
+def client(client):
+    
+    if 'username' not in session:
+        return redirect('/login')
+    
+    username = session["username"]
+    access_clients = users[username]["AccessCL"]
+
+    print(client)
+
+    return render_template('client.html', clients= access_clients)
 
 
 
