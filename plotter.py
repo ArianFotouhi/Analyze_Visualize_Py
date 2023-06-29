@@ -1,7 +1,5 @@
-from PIL import Image
 from config import plot_gradient_intensity, num_samples_gradient
 import datetime
-import os
 import matplotlib.pyplot as plt
 import base64
 import matplotlib
@@ -9,6 +7,9 @@ matplotlib.use('Agg')
 import numpy as np
 import matplotlib.ticker as ticker
 import io
+from utils import logo_render
+from PIL import Image
+
 
 class Plotter:
     def __init__(self, x, y, title, xlabel='', ylabel='', no_data_error='', client=''):
@@ -102,7 +103,9 @@ class Plotter:
         
         
         if self.client:
-            self.attach_logo(fig)  # Attach the logo to the plot
+            logo = logo_render(self.client)
+            if logo:
+                self.attach_logo(fig, logo)  # Attach the logo to the plot
 
         return fig
     
@@ -128,10 +131,7 @@ class Plotter:
         # Create the JSON response
         return image_base64
     
-    def attach_logo(self, fig):
-        logo_path = 'static/image/image.png'  # Path to your logo image
-        logo = Image.open(logo_path)
-        
+    def attach_logo(self, fig, logo):
         # Resize the logo to fit in the plot
         logo_width = fig.bbox.width * 0.15
         logo_height = logo_width * logo.size[1] / logo.size[0]
