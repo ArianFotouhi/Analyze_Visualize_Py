@@ -1,6 +1,7 @@
 import pandas as pd
 from flask import session
-
+from PIL import Image
+import os
 from datetime import datetime, timedelta
 import pytz
 from config import Date_col, Lounge_ID_Col, CLName_Col, Volume_ID_Col, Refuse_Col, Ratio_Col, users, time_alert, crowdedness_alert, Airport_Name_Col, City_Name_Col, Country_Name_Col, plot_interval
@@ -8,13 +9,16 @@ from config import Date_col, Lounge_ID_Col, CLName_Col, Volume_ID_Col, Refuse_Co
 import matplotlib.image as mpimg
 
 
-# def logo_render(client):
-    
-#     logo_path = 'static/image/logo.png'  # Replace with the actual path to your logo image
-#     logo_img = mpimg.imread(logo_path)
+def logo_render(client):
+    logo_path = 'static/image/'  # Path to your logo image
+    logo_file = f'{client}.png'
+    logo_full_path = os.path.join(logo_path, logo_file)
 
-#     return logo_img
-
+    if os.path.exists(logo_full_path):
+        logo = Image.open(logo_full_path)
+        return logo
+    else:
+        return None
 
 
 def update_time_alert(new_value):
