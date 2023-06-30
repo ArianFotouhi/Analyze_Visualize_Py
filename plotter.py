@@ -1,4 +1,4 @@
-from config import plot_gradient_intensity, num_samples_gradient
+from config import num_samples_gradient
 import datetime
 import matplotlib.pyplot as plt
 import base64
@@ -12,7 +12,7 @@ from PIL import Image
 
 
 class Plotter:
-    def __init__(self, x, y, title, xlabel='', ylabel='', no_data_error='', client=''):
+    def __init__(self, x, y, title, xlabel='', ylabel='', no_data_error='', client='', plot_gradient_intensity=0.5 ):
         self.x = x
         self.y = y
         self.title = title
@@ -20,6 +20,7 @@ class Plotter:
         self.ylabel = ylabel
         self.no_data_error = no_data_error
         self.client = client
+        self.plot_gradient_intensity= plot_gradient_intensity
     
     def calculate_growth_percentage(self):
         # Calculate the growth percentage of the last two points of y
@@ -50,11 +51,12 @@ class Plotter:
         red = 0.0
         green = 187/255
         blue = 0.0
+        self.plot_gradient_intensity
         for i in range(len(color_samples)):
             if i != (len(color_samples) - 1):
                 c_gradient = (color_samples[dict_keys[i+1]] - color_samples[dict_keys[i]]) / (color_samples[dict_keys[i]])
-                red -= c_gradient*plot_gradient_intensity
-                green += c_gradient*plot_gradient_intensity
+                red -= c_gradient*self.plot_gradient_intensity
+                green += c_gradient*self.plot_gradient_intensity
 
                 if red < 0:
                     red = 0
