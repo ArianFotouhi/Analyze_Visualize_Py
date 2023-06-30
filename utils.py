@@ -4,9 +4,8 @@ from PIL import Image
 import os
 from datetime import datetime, timedelta
 import pytz
-from config import Date_col, Lounge_ID_Col, CLName_Col, Volume_ID_Col, Refuse_Col, Ratio_Col, users, time_alert, crowdedness_alert, Airport_Name_Col, City_Name_Col, Country_Name_Col, plot_interval
+from config import Date_col, Lounge_ID_Col, CLName_Col, Volume_ID_Col, Refuse_Col, Ratio_Col, users, time_alert, crowdedness_alert, Airport_Name_Col, City_Name_Col, Country_Name_Col, plot_interval, plot_gradient_intensity
 
-import matplotlib.image as mpimg
 
 
 def logo_render(client):
@@ -21,12 +20,7 @@ def logo_render(client):
         return None
 
 
-def update_time_alert(new_value):
-    global time_alert
-    time_alert = new_value
-def update_plot_interval(new_value):
-    global plot_interval
-    plot_interval = new_value
+
 
 def load_data():
     df = pd.read_csv('fake_data.txt')
