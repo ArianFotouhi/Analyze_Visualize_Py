@@ -1,5 +1,5 @@
 from flask import Flask, render_template, request, redirect, session, jsonify, url_for
-from utils import load_data, filter_data_by_cl, dropdown_menu_filter, LoungeCounter, stream_on_off, active_inactive_lounges, active_clients_percent, volume_rate, filter_unique_val_dict, lounge_crowdedness, get_notifications, ParameterCounter, record_sum_calculator, record_lister, update_time_alert, update_plot_interval, crowdedness_alert, range_filter, order_clients
+from utils import load_data, filter_data_by_cl, dropdown_menu_filter, LoungeCounter, stream_on_off, active_inactive_lounges, active_clients_percent, volume_rate, filter_unique_val_dict, lounge_crowdedness, get_notifications, ParameterCounter, record_sum_calculator, record_lister, crowdedness_alert, range_filter, order_clients
 from config import Date_col, Lounge_ID_Col, CLName_Col, Volume_ID_Col,  users, Airport_Name_Col, City_Name_Col, Country_Name_Col
 from authentication import Authentication
 import numpy as np
@@ -92,6 +92,8 @@ def update_plot():
 
     time_alert = int(request.form['time_alert']) 
     plot_interval = int(request.form['plt_interval'])
+    
+    plot_gradient_intensity = float(request.form['plot_gradient_intensity'])
     selected_client_order = request.form['client_order']
 
     selected_start_date = request.form['start_date']
@@ -101,8 +103,6 @@ def update_plot():
         df = range_filter(df, pd.to_datetime(selected_start_date),pd.to_datetime(selected_end_date),Date_col)
     
 
-    update_time_alert(time_alert)
-    update_plot_interval(plot_interval)
 
 
     
@@ -260,9 +260,10 @@ def update_plot():
                 no_data_error = f"Last update {no_data_dict[str(client)]}"
             else:
                 no_data_error = None
-
+        
+            print('in app.py',plot_gradient_intensity)
             plt_title = f'{client}, Lounge {actives}/{actives + inactives}, AP No. {airport_num}'
-            pltr = Plotter(date_list, vol_sum_list, plt_title , '', 'Passebgers Rate', no_data_error=no_data_error,client=client)
+            pltr = Plotter(date_list, vol_sum_list, plt_title , '', 'Passebgers Rate', no_data_error= no_data_error, client= client, plot_gradient_intensity=plot_gradient_intensity)
             image_info = pltr.save_plot()  
 
             image_list.append(image_info)
@@ -403,8 +404,6 @@ def update_dashboard():
 
     if selected_start_date != '' or selected_end_date!= '':
         df = range_filter(df, pd.to_datetime(selected_start_date),pd.to_datetime(selected_end_date),Date_col)
-    update_time_alert(time_alert)
-    update_plot_interval(plot_interval)
 
     #scales: sec, min, hour, day, mo, year
     no_data_dict = stream_on_off(scale='day', length=time_alert)
@@ -419,7 +418,7 @@ def update_dashboard():
     
     df = filter_data_by_cl(session["username"], df, client, access_clients)
     for lounge in lg_list:
-        print('lounge',lounge)
+        # print('lounge',lounge)
         lounge_df = dropdown_menu_filter(df,Lounge_ID_Col ,lounge)
         
 
