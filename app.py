@@ -382,7 +382,7 @@ def dashboard(client):
     stat_list = [act_loung_num, inact_loung_num, inact_lg_list, crowdedness]
     return render_template('dashboard.html', client= client,cl_lounges_= cl_lounges_, 
                            airports = airport_uq_list, cities = city_uq_list, countries = country_uq_list,
-                             stat_list=stat_list, setting=setting)
+                             stats=stat_list, setting=setting)
 
 @app.route('/update_dashboard', methods=['POST'])
 def update_dashboard():
