@@ -43,17 +43,26 @@ def range_filter(df, from_, to_, column_name):
 def filter_data_by_cl(username, df, selected_client, access_clients):
     
     if selected_client:
-        if selected_client in access_clients:
-        # filtering of client on upper left of screen
-            filtered_df = df[df[CLName_Col] == str(selected_client)]
+
+        if isinstance(selected_client, list):
+            if selected_client == access_clients or set(selected_client).issubset(access_clients):
+                filtered_df = df[df[CLName_Col].isin(selected_client)]
+                print('i did it in filter by given list!')
+            else:
+                filtered_df = None
         else:
-            filtered_df = None
+            
+            if selected_client in access_clients:
+                filtered_df = df[df[CLName_Col] == str(selected_client)]
+            else:
+                filtered_df = None
 
     elif users[username]['ClientID'] == 'admin':
         return df
     else:
         # filtered_df = df[df[CLName_Col] == users[username]['AccessCL']]
         filtered_df = df[df[CLName_Col].isin(list(users[username]['AccessCL']))]
+
     return filtered_df
 
 
@@ -356,13 +365,12 @@ def filter_unique_val_dict(df, column):
 
 
 
-def lounge_crowdedness(date='latest', alert=crowdedness_alert):
+def lounge_crowdedness(access_clients, date='latest', selected_client='', alert=crowdedness_alert):
 
-    username = session["username"]
-    access_clients = users[username]["AccessCL"]
+
     df = load_data()
 
-    df  = filter_data_by_cl(session["username"], df, '', access_clients)
+    df  = filter_data_by_cl(session["username"], df, selected_client, access_clients)
 
     rates = {'very_crowded':{}, 'crowded':{}, 'normal':{}, 'uncrowded':{}, 'open_to_accept':{}}
    
