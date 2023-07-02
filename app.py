@@ -50,7 +50,7 @@ def home():
     accessed_df = filter_data_by_cl(session["username"], df, '', access_clients)
 
     data = accessed_df.to_dict(orient='records')
-    crowdedness = lounge_crowdedness(date='latest', alert = crowdedness_alert)
+    crowdedness = lounge_crowdedness(date='latest', alert = crowdedness_alert, access_clients=access_clients)
     
 
     active_lounges, inactive_lounges, act_loung_num, inact_loung_num = active_inactive_lounges(access_clients)
@@ -228,7 +228,7 @@ def update_plot():
         active_clients_num = int(len(active_clients))
         inactive_clients_num = int(len(inactive_clients))
         
-        crowdedness = lounge_crowdedness(date='latest', alert = crowdedness_alert)
+        crowdedness = lounge_crowdedness(date='latest', alert = crowdedness_alert, access_clients=access_clients)
         notifications = get_notifications(inact_loung_num,inactive_clients,crowdedness)
         
         #alphabet
@@ -261,7 +261,6 @@ def update_plot():
             else:
                 no_data_error = None
         
-            print('in app.py',plot_gradient_intensity)
             plt_title = f'{client}, Lounge {actives}/{actives + inactives}, AP No. {airport_num}'
             pltr = Plotter(date_list, vol_sum_list, plt_title , '', 'Passebgers Rate', no_data_error= no_data_error, client= client, plot_gradient_intensity=plot_gradient_intensity)
             image_info = pltr.save_plot()  
@@ -324,7 +323,7 @@ def intelligence_hub():
 
     active_lounges, inactive_lounges, act_loung_num, inact_loung_num = active_inactive_lounges(access_clients)
     active_clients, inactive_clients = active_clients_percent(access_clients, active_lounges, inactive_lounges)
-    crowdedness = lounge_crowdedness(date='latest',alert = crowdedness_alert)
+    crowdedness = lounge_crowdedness(date='latest',alert = crowdedness_alert, access_clients=access_clients)
     stat_list = [inactive_clients,inactive_lounges,crowdedness]
     
     return render_template('intelligence_hub.html', clients= access_clients, stats= stat_list)
@@ -362,17 +361,28 @@ def dashboard(client):
     filtered_df = dropdown_menu_filter(df,CLName_Col ,client)
 
     cl_lounges_ = filter_unique_val_dict(filtered_df, 'lounges')
-    airport_uq_list = filter_unique_val_dict(filtered_df,'airport')
-    city_uq_list = filter_unique_val_dict(filtered_df, 'city')
+    airport_uq_list = filter_unique_val_dict(filtered_df,'airport') #return an array
+    city_uq_list = filter_unique_val_dict(filtered_df, 'city') #return an array
     country_uq_list = filter_unique_val_dict(filtered_df, 'country')
 
     setting = {'time_alert':np.arange(1,30), 'plot_interval':np.arange(1,30)}
 
 
+    crowdedness = lounge_crowdedness(date='latest', alert = crowdedness_alert, access_clients=access_clients)
+    
 
+    active_lounges, inactive_lounges, act_loung_num, inact_loung_num = active_inactive_lounges([client])
+    # active_clients, inactive_clients = active_clients_percent(access_clients, active_lounges, inactive_lounges)
+    # volume_rates, vol_curr, vol_prev = volume_rate(access_clients, amount=7)
+    if client in inactive_lounges:
+        inact_lg_list = list(inactive_lounges[client])
+    else:
+        inact_lg_list = None
 
+    stat_list = [act_loung_num, inact_loung_num, inact_lg_list, crowdedness]
     return render_template('dashboard.html', client= client,cl_lounges_= cl_lounges_, 
-                           airports = airport_uq_list, cities = city_uq_list, countries = country_uq_list, setting=setting)
+                           airports = airport_uq_list, cities = city_uq_list, countries = country_uq_list,
+                             stat_list=stat_list, setting=setting)
 
 @app.route('/update_dashboard', methods=['POST'])
 def update_dashboard():
