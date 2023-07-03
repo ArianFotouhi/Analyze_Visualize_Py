@@ -448,7 +448,7 @@ def update_dashboard():
 
         image_list.append(image_info)
         
-    return jsonify({'image_info':image_list, 'lounge_list':lg_list})
+    return jsonify({'image_info': image_list, 'lounge_list': list(lg_list)})
 
 
 
