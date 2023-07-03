@@ -17,7 +17,6 @@ plot_interval = 10
 
 plot_gradient_intensity = 0.5
 num_samples_gradient = 200
-print('in config', plot_gradient_intensity)
 
 users = {
     "admin": {"password": "admin", "ClientID": 'admin', 'AccessCL':['STAR_AMS', 'CL2','CL3','CL4','CL5','CL6','CL7']},
