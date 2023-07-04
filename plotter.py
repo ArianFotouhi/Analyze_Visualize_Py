@@ -12,7 +12,7 @@ from PIL import Image
 
 
 class Plotter:
-    def __init__(self, x, y, title, plt_thickness, xlabel='', ylabel='', no_data_error='', client='', plot_gradient_intensity=0.5 ):
+    def __init__(self, x, y, title, plt_thickness=2.0, xlabel='', ylabel='', no_data_error='', client='', plot_gradient_intensity=0.5 ):
         self.x = x
         self.y = y
         self.title = title
