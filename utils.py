@@ -5,12 +5,20 @@ import os
 from datetime import datetime, timedelta
 import pytz
 from config import Date_col, Lounge_ID_Col, CLName_Col, Volume_ID_Col, Refuse_Col, Ratio_Col, users, time_alert, crowdedness_alert, Airport_Name_Col, City_Name_Col, Country_Name_Col, plot_interval, plot_gradient_intensity
+from conversion import convert_to_secure_name
 
-
-
+def update_time_alert(new_value):
+    global time_alert
+    time_alert = new_value
+def update_plot_interval(new_value):
+    global plot_interval
+    plot_interval = new_value
+    
 def logo_render(client):
     logo_path = 'static/image/'  # Path to your logo image
-    logo_file = f'{client}.png'
+    secure_name = convert_to_secure_name(client)
+
+    logo_file = f'{secure_name}.png'
     logo_full_path = os.path.join(logo_path, logo_file)
 
     if os.path.exists(logo_full_path):
