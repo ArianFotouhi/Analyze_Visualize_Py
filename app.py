@@ -94,6 +94,7 @@ def update_plot():
     plot_interval = int(request.form['plt_interval'])
     
     plot_gradient_intensity = float(request.form['plot_gradient_intensity'])
+    plt_thickness = float(request.form['plt_thickness'])
     selected_client_order = request.form['client_order']
 
     selected_start_date = request.form['start_date']
@@ -262,7 +263,8 @@ def update_plot():
                 no_data_error = None
         
             plt_title = f'{client}, Lounge {actives}/{actives + inactives}, AP No. {airport_num}'
-            pltr = Plotter(date_list, vol_sum_list, plt_title , '', 'Passebgers Rate', no_data_error= no_data_error, client= client, plot_gradient_intensity=plot_gradient_intensity)
+            pltr = Plotter(date_list, vol_sum_list, plt_title , plt_thickness= plt_thickness ,xlabel='',  ylabel='Passebgers Rate', no_data_error= no_data_error, 
+                           client= client, plot_gradient_intensity=plot_gradient_intensity)
             image_info = pltr.save_plot()  
 
             image_list.append(image_info)
