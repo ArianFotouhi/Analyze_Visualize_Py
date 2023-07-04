@@ -5,6 +5,11 @@ from authentication import Authentication
 import numpy as np
 import pandas as pd
 from plotter import Plotter
+from conversion import convert_to_secure_name
+from location import get_coordinates
+
+from markupsafe import Markup
+
 
 authenticate = Authentication().authenticate
 
@@ -105,7 +110,7 @@ def update_plot():
 
     update_time_alert(time_alert)
     update_plot_interval(plot_interval)
-    
+
     if selected_start_date != '' or selected_end_date!= '':
         df = range_filter(df, pd.to_datetime(selected_start_date),pd.to_datetime(selected_end_date),Date_col)
     
@@ -236,7 +241,6 @@ def update_plot():
         inactive_clients_num = int(len(inactive_clients))
         
         crowdedness = lounge_crowdedness(date='latest', alert = crowdedness_alert, access_clients=access_clients)
-        print('in ajax,', inact_loung_num, inactive_clients)
         notifications = get_notifications(inact_loung_num, inactive_clients, crowdedness)
         
         #alphabet
@@ -374,8 +378,16 @@ def dashboard(client):
     city_uq_list = filter_unique_val_dict(filtered_df, 'city') #return an array
     country_uq_list = filter_unique_val_dict(filtered_df, 'country')
 
+    print(city_uq_list)
+    cities_dict = get_coordinates(city_uq_list) #[lat, lon, city, county]
+
+
     setting = {'time_alert':np.arange(1,30), 'plot_interval':np.arange(1,30)}
 
+    file_name = convert_to_secure_name(client)
+    print('cities_dict',cities_dict)
+    # cities_dict = [40.7127281, -74.0060152, 'New York City', 'United States']
+    cities_dict = Markup(cities_dict)
 
     crowdedness = lounge_crowdedness(date='latest', alert = crowdedness_alert, access_clients=access_clients)
     
@@ -391,7 +403,7 @@ def dashboard(client):
     stat_list = [act_loung_num, inact_loung_num, inact_lg_list, crowdedness]
     return render_template('dashboard.html', client= client,cl_lounges_= cl_lounges_, 
                            airports = airport_uq_list, cities = city_uq_list, countries = country_uq_list,
-                             stats=stat_list, setting=setting)
+                             stats=stat_list, setting=setting, logo_file_name=file_name, cities_dict=cities_dict)
 
 @app.route('/update_dashboard', methods=['POST'])
 def update_dashboard():
@@ -415,9 +427,9 @@ def update_dashboard():
     selected_end_date = request.form['end_date']
 
 
-    filtered_df = dropdown_menu_filter(df,CLName_Col ,client)
+    filtered_df = dropdown_menu_filter(df, CLName_Col, client)
     
-    lg_list = filter_unique_val_dict(filtered_df, 'lounges')
+    lg_list = filter_unique_val_dict(filtered_df, 'lounges')[client]
 
 
 
@@ -436,6 +448,8 @@ def update_dashboard():
     image_list=[]
     
     df = filter_data_by_cl(session["username"], df, client, access_clients)
+    # lg_list = order_clients(df,lg_list, 'pax_rate', optional=['day',time_alert],plot_interval=plot_interval)
+
     for lounge in lg_list:
         lounge_df = dropdown_menu_filter(df,Lounge_ID_Col ,lounge)
         
@@ -444,18 +458,20 @@ def update_dashboard():
         
         date_list = record_lister(lounge_df[Date_col].dt.strftime('%Y-%m-%d %H:%M:%S').unique().tolist(), plot_interval*24)
         vol_sum_list = record_sum_calculator(lounge_df.groupby(Date_col)[Volume_ID_Col].sum().to_list(), plot_interval*24)
+        
+
         # if str(client) in list(no_data_dict.keys()):
         #     no_data_error = f"Last update {no_data_dict[str(client)]}"
         # else:
         #     no_data_error = None
 
 
-        plt_title = f''
-        pltr = Plotter(date_list, vol_sum_list, plt_title , '', 'Passebgers Rate', no_data_error=None)
+        plt_title = f'Lounge {lounge}'
+        pltr = Plotter(date_list, vol_sum_list, plt_title , plt_thickness= 3.0 ,xlabel='',  ylabel='Passebgers Rate', no_data_error= '', 
+                           client= '', plot_gradient_intensity=1)
         image_info = pltr.save_plot()  
 
         image_list.append(image_info)
-        
     return jsonify({'image_info': image_list, 'lounge_list': list(lg_list)})
 
 
