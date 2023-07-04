@@ -1,5 +1,5 @@
 from flask import Flask, render_template, request, redirect, session, jsonify, url_for
-from utils import load_data, filter_data_by_cl, dropdown_menu_filter, LoungeCounter, stream_on_off, active_inactive_lounges, active_clients_percent, volume_rate, filter_unique_val_dict, lounge_crowdedness, get_notifications, ParameterCounter, record_sum_calculator, record_lister, crowdedness_alert, range_filter, order_clients
+from utils import load_data, filter_data_by_cl, dropdown_menu_filter, LoungeCounter, stream_on_off, active_inactive_lounges, active_clients_percent, volume_rate, filter_unique_val_dict, lounge_crowdedness, get_notifications, ParameterCounter, record_sum_calculator, record_lister, crowdedness_alert, range_filter, order_clients, update_time_alert, update_plot_interval
 from config import Date_col, Lounge_ID_Col, CLName_Col, Volume_ID_Col,  users, Airport_Name_Col, City_Name_Col, Country_Name_Col
 from authentication import Authentication
 import numpy as np
@@ -62,7 +62,7 @@ def home():
     city_uq_list = filter_unique_val_dict(df, 'city')
     country_uq_list = filter_unique_val_dict(df, 'country')
 
-    notifications = get_notifications(inact_loung_num,inactive_clients,crowdedness)
+    # notifications = get_notifications(inact_loung_num,inactive_clients,crowdedness)
     
     setting = {'time_alert':np.arange(1,30), 'plot_interval':np.arange(1,30)}
 
@@ -84,6 +84,8 @@ def update_plot():
 
 
 
+
+
     selected_client = request.form['client']
     selected_lounge = request.form['lounge_name']
     selected_airport = request.form['airport_name']
@@ -99,6 +101,10 @@ def update_plot():
 
     selected_start_date = request.form['start_date']
     selected_end_date = request.form['end_date']
+    
+
+    update_time_alert(time_alert)
+    update_plot_interval(plot_interval)
     
     if selected_start_date != '' or selected_end_date!= '':
         df = range_filter(df, pd.to_datetime(selected_start_date),pd.to_datetime(selected_end_date),Date_col)
@@ -230,7 +236,8 @@ def update_plot():
         inactive_clients_num = int(len(inactive_clients))
         
         crowdedness = lounge_crowdedness(date='latest', alert = crowdedness_alert, access_clients=access_clients)
-        notifications = get_notifications(inact_loung_num,inactive_clients,crowdedness)
+        print('in ajax,', inact_loung_num, inactive_clients)
+        notifications = get_notifications(inact_loung_num, inactive_clients, crowdedness)
         
         #alphabet
         #pax_rate
@@ -430,7 +437,6 @@ def update_dashboard():
     
     df = filter_data_by_cl(session["username"], df, client, access_clients)
     for lounge in lg_list:
-        # print('lounge',lounge)
         lounge_df = dropdown_menu_filter(df,Lounge_ID_Col ,lounge)
         
 
