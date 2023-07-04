@@ -12,7 +12,7 @@ from PIL import Image
 
 
 class Plotter:
-    def __init__(self, x, y, title, xlabel='', ylabel='', no_data_error='', client='', plot_gradient_intensity=0.5 ):
+    def __init__(self, x, y, title, plt_thickness, xlabel='', ylabel='', no_data_error='', client='', plot_gradient_intensity=0.5 ):
         self.x = x
         self.y = y
         self.title = title
@@ -21,6 +21,7 @@ class Plotter:
         self.no_data_error = no_data_error
         self.client = client
         self.plot_gradient_intensity= plot_gradient_intensity
+        self.plt_thickness = plt_thickness
     
     def calculate_growth_percentage(self):
         # Calculate the growth percentage of the last two points of y
@@ -71,7 +72,9 @@ class Plotter:
                 ax.plot(
                     self.x[dict_keys[i]: dict_keys[i + 1] + 1],
                     self.y[dict_keys[i]: dict_keys[i + 1] + 1],
-                    color=[red, green, blue]
+                    color=[red, green, blue],
+                    linewidth= self.plt_thickness 
+
                 )
 
             else:
