@@ -358,6 +358,50 @@ def dormant():
     
     return render_template('dormant.html', clients= access_clients, stats= stat_list)
 
+@app.route('/dashboard/<client>/lounges', methods=['GET'])
+def dashboard_lounge(client):   
+    if 'username' not in session:
+        return redirect('/login')
+    
+    username = session["username"]
+    access_clients = users[username]["AccessCL"]
+    
+    if client not in access_clients:
+        return redirect('/home')
+    
+    df = load_data()
+    filtered_df = dropdown_menu_filter(df,CLName_Col ,client)
+
+    cl_lounges_ = filter_unique_val_dict(filtered_df, 'lounges')
+    airport_uq_list = filter_unique_val_dict(filtered_df,'airport') #return an array
+    city_uq_list = filter_unique_val_dict(filtered_df, 'city') #return an array
+    country_uq_list = filter_unique_val_dict(filtered_df, 'country')
+
+    cities_dict = get_coordinates(city_uq_list) #[lat, lon, city, country]
+    cities_dict = Markup(cities_dict)
+
+
+    setting = {'time_alert':np.arange(1,30), 'plot_interval':np.arange(1,30)}
+
+    file_name = convert_to_secure_name(client)
+
+    crowdedness = lounge_crowdedness(date='latest', alert = crowdedness_alert, access_clients=access_clients)
+    
+
+    active_lounges, inactive_lounges, act_loung_num, inact_loung_num = active_inactive_lounges([client])
+    # active_clients, inactive_clients = active_clients_percent(access_clients, active_lounges, inactive_lounges)
+    # volume_rates, vol_curr, vol_prev = volume_rate(access_clients, amount=7)
+    if client in inactive_lounges:
+        inact_lg_list = list(inactive_lounges[client])
+    else:
+        inact_lg_list = None
+
+    stat_list = [inact_lg_list, crowdedness]
+    return render_template('lounge_monitor.html', client= client,cl_lounges_= cl_lounges_, 
+                           airports = airport_uq_list, cities = city_uq_list, countries = country_uq_list,
+                             stats=stat_list, setting=setting, logo_file_name=file_name, cities_dict=cities_dict)  
+
+
 @app.route('/dashboard/<client>', methods=['GET'])
 def dashboard(client):
     
@@ -378,7 +422,7 @@ def dashboard(client):
     city_uq_list = filter_unique_val_dict(filtered_df, 'city') #return an array
     country_uq_list = filter_unique_val_dict(filtered_df, 'country')
 
-    cities_dict = get_coordinates(city_uq_list) #[lat, lon, city, county]
+    cities_dict = get_coordinates(city_uq_list) #[lat, lon, city, country]
     cities_dict = Markup(cities_dict)
 
 
@@ -410,7 +454,7 @@ def update_dashboard():
     df = load_data()
     
     client = request.form['client']
-
+    print('i am in dashboard update')
     # selected_lounge = request.form['lounge_name']
     # selected_airport = request.form['airport_name']
     # selected_city = request.form['city_name']
