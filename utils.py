@@ -55,7 +55,6 @@ def filter_data_by_cl(username, df, selected_client, access_clients):
         if isinstance(selected_client, list):
             if selected_client == access_clients or set(selected_client).issubset(access_clients):
                 filtered_df = df[df[CLName_Col].isin(selected_client)]
-                print('i did it in filter by given list!')
             else:
                 filtered_df = None
         else:
@@ -341,8 +340,11 @@ def filter_unique_val_dict(df, column):
         
         output = {}
         for i in cl_list:
+            
             if i in actives and i in inactives:
-                output[i] = list(set(actives[i].extend(inactives[i])))
+                actives[i] = list(actives[i])
+                actives[i].extend(list(inactives[i]))
+                output[i] = list(set(actives[i]))
             elif i in actives:
                 output[i] = actives[i]
             else:
