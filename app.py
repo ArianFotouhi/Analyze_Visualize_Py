@@ -55,12 +55,12 @@ def home():
     accessed_df = filter_data_by_cl(session["username"], df, '', access_clients)
 
     data = accessed_df.to_dict(orient='records')
-    crowdedness = lounge_crowdedness(date='latest', alert = crowdedness_alert, access_clients=access_clients)
+    # crowdedness = lounge_crowdedness(date='latest', alert = crowdedness_alert, access_clients=access_clients)
     
 
-    active_lounges, inactive_lounges, act_loung_num, inact_loung_num = active_inactive_lounges(access_clients)
-    active_clients, inactive_clients = active_clients_percent(access_clients, active_lounges, inactive_lounges)
-    volume_rates, vol_curr, vol_prev = volume_rate(access_clients, amount=7)
+    # active_lounges, inactive_lounges, act_loung_num, inact_loung_num = active_inactive_lounges(access_clients)
+    # active_clients, inactive_clients = active_clients_percent(access_clients, active_lounges, inactive_lounges)
+    # _, vol_curr, vol_prev = volume_rate(access_clients, amount=7)
 
     cl_lounges_ = filter_unique_val_dict(df, 'lounges')
     airport_uq_list = filter_unique_val_dict(df, 'airport')
@@ -69,11 +69,11 @@ def home():
 
     # notifications = get_notifications(inact_loung_num,inactive_clients,crowdedness)
     
-    setting = {'time_alert':np.arange(1,30), 'plot_interval':np.arange(1,30)}
+    setting = {'time_alert':np.arange(1,30), 'plot_interval':np.arange(2,7)}
 
-    stat_list = [act_loung_num, inact_loung_num,vol_curr, vol_prev, len(active_clients), len(inactive_clients),inactive_lounges, crowdedness]
+    # stat_list = [act_loung_num, inact_loung_num,vol_curr, vol_prev, len(active_clients), len(inactive_clients),inactive_lounges, crowdedness]
     
-    return render_template('index.html', data= data, clients= access_clients, stats= stat_list, cl_lounges_= cl_lounges_, 
+    return render_template('index.html', data= data, clients= access_clients, cl_lounges_= cl_lounges_, 
                            airports = airport_uq_list, cities = city_uq_list, countries = country_uq_list, setting=setting)
 
 
@@ -378,16 +378,13 @@ def dashboard(client):
     city_uq_list = filter_unique_val_dict(filtered_df, 'city') #return an array
     country_uq_list = filter_unique_val_dict(filtered_df, 'country')
 
-    print(city_uq_list)
     cities_dict = get_coordinates(city_uq_list) #[lat, lon, city, county]
+    cities_dict = Markup(cities_dict)
 
 
     setting = {'time_alert':np.arange(1,30), 'plot_interval':np.arange(1,30)}
 
     file_name = convert_to_secure_name(client)
-    print('cities_dict',cities_dict)
-    # cities_dict = [40.7127281, -74.0060152, 'New York City', 'United States']
-    cities_dict = Markup(cities_dict)
 
     crowdedness = lounge_crowdedness(date='latest', alert = crowdedness_alert, access_clients=access_clients)
     
@@ -400,7 +397,7 @@ def dashboard(client):
     else:
         inact_lg_list = None
 
-    stat_list = [act_loung_num, inact_loung_num, inact_lg_list, crowdedness]
+    stat_list = [inact_lg_list, crowdedness]
     return render_template('dashboard.html', client= client,cl_lounges_= cl_lounges_, 
                            airports = airport_uq_list, cities = city_uq_list, countries = country_uq_list,
                              stats=stat_list, setting=setting, logo_file_name=file_name, cities_dict=cities_dict)
@@ -414,17 +411,34 @@ def update_dashboard():
     
     client = request.form['client']
 
-    selected_lounge = request.form['lounge_name']
-    selected_airport = request.form['airport_name']
-    selected_city = request.form['city_name']
-    selected_country = request.form['country_name']
+    # selected_lounge = request.form['lounge_name']
+    # selected_airport = request.form['airport_name']
+    # selected_city = request.form['city_name']
+    # selected_country = request.form['country_name']
 
     time_alert = int(request.form['time_alert']) 
     plot_interval = int(request.form['plt_interval'])
-    selected_client_order = request.form['client_order']
+    
+    plot_gradient_intensity = float(request.form['plot_gradient_intensity'])
+    plt_thickness = float(request.form['plt_thickness'])
+    # selected_client_order = request.form['client_order']
 
     selected_start_date = request.form['start_date']
     selected_end_date = request.form['end_date']
+    
+
+    update_time_alert(time_alert)
+    update_plot_interval(plot_interval)
+
+    if selected_start_date != '' or selected_end_date!= '':
+        df = range_filter(df, pd.to_datetime(selected_start_date),pd.to_datetime(selected_end_date),Date_col)
+    
+
+
+
+    
+
+ 
 
 
     filtered_df = dropdown_menu_filter(df, CLName_Col, client)
@@ -437,7 +451,7 @@ def update_dashboard():
         df = range_filter(df, pd.to_datetime(selected_start_date),pd.to_datetime(selected_end_date),Date_col)
 
     #scales: sec, min, hour, day, mo, year
-    no_data_dict = stream_on_off(scale='day', length=time_alert)
+    # no_data_dict = stream_on_off(scale='day', length=time_alert)
 
 
 
@@ -448,7 +462,6 @@ def update_dashboard():
     image_list=[]
     
     df = filter_data_by_cl(session["username"], df, client, access_clients)
-    # lg_list = order_clients(df,lg_list, 'pax_rate', optional=['day',time_alert],plot_interval=plot_interval)
 
     for lounge in lg_list:
         lounge_df = dropdown_menu_filter(df,Lounge_ID_Col ,lounge)
@@ -460,19 +473,17 @@ def update_dashboard():
         vol_sum_list = record_sum_calculator(lounge_df.groupby(Date_col)[Volume_ID_Col].sum().to_list(), plot_interval*24)
         
 
-        # if str(client) in list(no_data_dict.keys()):
-        #     no_data_error = f"Last update {no_data_dict[str(client)]}"
-        # else:
-        #     no_data_error = None
-
-
         plt_title = f'Lounge {lounge}'
-        pltr = Plotter(date_list, vol_sum_list, plt_title , plt_thickness= 3.0 ,xlabel='',  ylabel='Passebgers Rate', no_data_error= '', 
-                           client= '', plot_gradient_intensity=1)
+        pltr = Plotter(date_list, vol_sum_list, plt_title , plt_thickness= plt_thickness ,xlabel='',  ylabel='Passebgers Rate', no_data_error= '', 
+                           client= client, plot_gradient_intensity=plot_gradient_intensity)
+        
         image_info = pltr.save_plot()  
-
         image_list.append(image_info)
-    return jsonify({'image_info': image_list, 'lounge_list': list(lg_list)})
+
+
+    active_lounges, inactive_lounges, act_loung_num, inact_loung_num = active_inactive_lounges([client])
+    return jsonify({'image_info': image_list, 'lounge_list': list(lg_list), 
+                    'act_loung_num':act_loung_num, 'inact_loung_num':inact_loung_num})
 
 
 
