@@ -385,21 +385,10 @@ def dashboard_lounge(client):
 
     file_name = convert_to_secure_name(client)
 
-    crowdedness = lounge_crowdedness(date='latest', alert = crowdedness_alert, access_clients=access_clients)
-    
-
-    active_lounges, inactive_lounges, act_loung_num, inact_loung_num = active_inactive_lounges([client])
-    # active_clients, inactive_clients = active_clients_percent(access_clients, active_lounges, inactive_lounges)
-    # volume_rates, vol_curr, vol_prev = volume_rate(access_clients, amount=7)
-    if client in inactive_lounges:
-        inact_lg_list = list(inactive_lounges[client])
-    else:
-        inact_lg_list = None
-
-    stat_list = [inact_lg_list, crowdedness]
+     
     return render_template('lounge_monitor.html', client= client,cl_lounges_= cl_lounges_, 
                            airports = airport_uq_list, cities = city_uq_list, countries = country_uq_list,
-                             stats=stat_list, setting=setting, logo_file_name=file_name, cities_dict=cities_dict)  
+                            setting=setting, logo_file_name=file_name)  
 
 
 @app.route('/dashboard/<client>', methods=['GET'])
