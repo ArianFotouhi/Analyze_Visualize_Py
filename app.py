@@ -560,5 +560,10 @@ def logout():
     session.pop('username', None)
     return redirect('/login')
 
+@app.route('/<path:path>')
+def redirect_to_home(path):
+    return redirect(url_for('home'))
+
+
 if __name__ == '__main__':
     app.run(debug=True)
