@@ -33,8 +33,8 @@ def logo_render(client):
 
 
 def load_data():
-    df = pd.read_csv('fake_data.txt')
-    # df = pd.read_csv("real_data.txt")
+    df = pd.read_csv('data/fake_data.txt')
+    # df = pd.read_csv("data/real_data.txt")
     df[Date_col] = pd.to_datetime(df[Date_col])
     
     return df
