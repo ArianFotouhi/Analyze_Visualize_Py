@@ -6,6 +6,8 @@ from datetime import datetime, timedelta
 import pytz
 from config import Date_col, Lounge_ID_Col, CLName_Col, Volume_ID_Col, Refuse_Col, Ratio_Col, users, time_alert, crowdedness_alert, Airport_Name_Col, City_Name_Col, Country_Name_Col, plot_interval, plot_gradient_intensity
 from conversion import convert_to_secure_name
+from collections import Counter
+import json
 
 def update_time_alert(new_value):
     global time_alert
@@ -329,6 +331,11 @@ def volume_rate(clients, amount=5):
 
     return rates, current_vol,  prev_vol
 
+def unique_counter(df, column_name):
+    country_list = df[column_name].tolist()
+    country_counts = Counter(country_list)
+    country_data = [{'name': country, 'value': count} for country, count in country_counts.items()]
+    return country_data
 
 def filter_unique_val_dict(df, column):
     if column =='lounges':
