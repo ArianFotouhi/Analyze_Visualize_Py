@@ -1,5 +1,5 @@
 from flask import Flask, render_template, request, redirect, session, jsonify, url_for
-from utils import load_data, filter_data_by_cl, dropdown_menu_filter, LoungeCounter, stream_on_off, active_inactive_lounges, active_clients_percent, volume_rate, filter_unique_val_dict, lounge_crowdedness, get_notifications, ParameterCounter, record_sum_calculator, record_lister, crowdedness_alert, range_filter, order_clients, update_time_alert, update_plot_interval
+from utils import load_data, filter_data_by_cl, dropdown_menu_filter, LoungeCounter, stream_on_off, active_inactive_lounges, active_clients_percent, volume_rate, filter_unique_val_dict, lounge_crowdedness, get_notifications, ParameterCounter, record_sum_calculator, record_lister, crowdedness_alert, range_filter, order_clients, update_time_alert, update_plot_interval, unique_counter
 from config import Date_col, Lounge_ID_Col, CLName_Col, Volume_ID_Col,  users, Airport_Name_Col, City_Name_Col, Country_Name_Col
 from authentication import Authentication
 import numpy as np
@@ -358,6 +358,7 @@ def dormant():
     
     return render_template('dormant.html', clients= access_clients, stats= stat_list)
 
+
 @app.route('/dashboard/<client>/lounges', methods=['GET'])
 def dashboard_lounge(client):   
     if 'username' not in session:
@@ -443,7 +444,6 @@ def update_dashboard():
     df = load_data()
     
     client = request.form['client']
-    print('i am in dashboard update')
     # selected_lounge = request.form['lounge_name']
     # selected_airport = request.form['airport_name']
     # selected_city = request.form['city_name']
@@ -521,6 +521,37 @@ def update_dashboard():
 
 
 
+
+@app.route('/map', methods=['GET'])
+def map():
+
+    if 'username' not in session:
+        return redirect('/login')
+    
+    username = session["username"]
+    access_clients = users[username]["AccessCL"]
+
+    return render_template('map.html')
+
+
+@app.route('/update_map', methods=['POST'])
+def update_map():
+    
+    username = session["username"]
+    access_clients = users[username]["AccessCL"]
+    df = load_data()
+    
+
+
+    username = session["username"]
+    access_clients = users[username]["AccessCL"]
+
+    df = filter_data_by_cl(session["username"], df, access_clients, access_clients)
+
+    #number of passengers not the received data records
+    country_uq_dict = unique_counter(df, Country_Name_Col)
+
+    return jsonify({'country_uq_dict': country_uq_dict})
 
 
 
