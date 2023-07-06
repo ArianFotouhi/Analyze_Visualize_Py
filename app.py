@@ -392,6 +392,34 @@ def dashboard_lounge(client):
                             setting=setting, logo_file_name=file_name)  
 
 
+@app.route('/dashboard/<client>/airports', methods=['GET'])
+def dashboard_airport(client):   
+    if 'username' not in session:
+        return redirect('/login')
+    
+    username = session["username"]
+    access_clients = users[username]["AccessCL"]
+    
+    if client not in access_clients:
+        return redirect('/home')
+    
+    df = load_data()
+    filtered_df = dropdown_menu_filter(df,CLName_Col ,client)
+
+    airport_uq_list = filter_unique_val_dict(filtered_df,'airport') #return an array
+
+    dict_airport_info = {}
+    for i in airport_uq_list:
+        temp_df = filtered_df[filtered_df[Airport_Name_Col]==i]
+        
+
+    file_name = convert_to_secure_name(client)
+
+     
+    return render_template('airport_monitor.html', client= client, 
+                           airports = list(airport_uq_list),  logo_file_name=file_name)  
+
+
 @app.route('/dashboard/<client>', methods=['GET'])
 def dashboard(client):
     
@@ -444,6 +472,8 @@ def update_dashboard():
     df = load_data()
     
     client = request.form['client']
+    page_user = request.form['page_user']
+
     # selected_lounge = request.form['lounge_name']
     # selected_airport = request.form['airport_name']
     # selected_city = request.form['city_name']
@@ -487,7 +517,9 @@ def update_dashboard():
     # no_data_dict = stream_on_off(scale='day', length=time_alert)
 
 
-
+    if page_user == 'dashboard':
+        lg_list = list(lg_list)
+        lg_list = lg_list[:3]
 
     #alphabet
     #pax_rate
@@ -497,6 +529,7 @@ def update_dashboard():
     df = filter_data_by_cl(session["username"], df, client, access_clients)
 
     for lounge in lg_list:
+        print(lounge, page_user)
         lounge_df = dropdown_menu_filter(df,Lounge_ID_Col ,lounge)
         
 
