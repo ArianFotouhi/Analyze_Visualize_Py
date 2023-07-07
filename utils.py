@@ -331,11 +331,17 @@ def volume_rate(clients, amount=5):
 
     return rates, current_vol,  prev_vol
 
-def unique_counter(df, column_name):
-    country_list = df[column_name].tolist()
-    country_counts = Counter(country_list)
-    country_data = [{'name': country, 'value': count} for country, count in country_counts.items()]
-    return country_data
+def column_sum(df, column_name,sum_on_column):
+
+    result_dict = {}
+    for i in df[column_name].unique():
+        volume_sum = df[df[column_name] == i][sum_on_column].sum()
+        result_dict[i] = volume_sum
+
+    result = [{'name': i, 'value': int(j)} for i, j in result_dict.items()]  # Convert int64 to regular Python int
+    
+
+    return result
 
 def filter_unique_val_dict(df, column):
     if column =='lounges':
