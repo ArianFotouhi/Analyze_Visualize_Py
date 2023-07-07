@@ -93,6 +93,9 @@ class Plotter:
         
         # Format y-axis tick labels as integers
         ax.yaxis.set_major_formatter(ticker.FuncFormatter(lambda y, _: '{:.0f}'.format(y)))
+        
+        ax.spines['top'].set_visible(False)
+        ax.spines['right'].set_visible(False)
 
         if self.no_data_error:
             ax.text(0.5, 0.2, self.no_data_error, horizontalalignment='center', verticalalignment='center',
