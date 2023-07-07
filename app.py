@@ -1,5 +1,5 @@
 from flask import Flask, render_template, request, redirect, session, jsonify, url_for
-from utils import load_data, filter_data_by_cl, dropdown_menu_filter, LoungeCounter, stream_on_off, active_inactive_lounges, active_clients_percent, volume_rate, filter_unique_val_dict, lounge_crowdedness, get_notifications, ParameterCounter, record_sum_calculator, record_lister, crowdedness_alert, range_filter, order_clients, update_time_alert, update_plot_interval, unique_counter
+from utils import load_data, filter_data_by_cl, dropdown_menu_filter, LoungeCounter, stream_on_off, active_inactive_lounges, active_clients_percent, volume_rate, filter_unique_val_dict, lounge_crowdedness, get_notifications, ParameterCounter, record_sum_calculator, record_lister, crowdedness_alert, range_filter, order_clients, update_time_alert, update_plot_interval, column_sum
 from config import Date_col, Lounge_ID_Col, CLName_Col, Volume_ID_Col,  users, Airport_Name_Col, City_Name_Col, Country_Name_Col
 from authentication import Authentication
 import numpy as np
@@ -35,7 +35,6 @@ def login():
         else:
             return render_template("login.html", error="Invalid username or password")
     return render_template("login.html")
-
 
 
 @app.route('/home', methods=['GET','POST'])
@@ -76,9 +75,6 @@ def home():
     return render_template('index.html', data= data, clients= access_clients, cl_lounges_= cl_lounges_, 
                            airports = airport_uq_list, cities = city_uq_list, countries = country_uq_list, setting=setting)
 
-
-  
-    
 
 @app.route('/update_plot', methods=['POST'])
 def update_plot():
@@ -324,7 +320,6 @@ def update_plot():
                         'cl':clients, 'image_info':image_list,'notifications':notifications})
 
 
-
 @app.route('/intelligence_hub', methods=['GET'])
 def intelligence_hub():
 
@@ -340,7 +335,6 @@ def intelligence_hub():
     stat_list = [inactive_clients,inactive_lounges,crowdedness]
     
     return render_template('intelligence_hub.html', clients= access_clients, stats= stat_list)
-
 
 
 @app.route('/dormant', methods=['GET'])
@@ -464,6 +458,7 @@ def dashboard(client):
                            airports = airport_uq_list, cities = city_uq_list, countries = country_uq_list,
                              stats=stat_list, setting=setting, logo_file_name=file_name, cities_dict=cities_dict)
 
+
 @app.route('/update_dashboard', methods=['POST'])
 def update_dashboard():
     
@@ -529,7 +524,6 @@ def update_dashboard():
     df = filter_data_by_cl(session["username"], df, client, access_clients)
 
     for lounge in lg_list:
-        print(lounge, page_user)
         lounge_df = dropdown_menu_filter(df,Lounge_ID_Col ,lounge)
         
 
@@ -552,9 +546,6 @@ def update_dashboard():
                     'act_loung_num':act_loung_num, 'inact_loung_num':inact_loung_num})
 
 
-
-
-
 @app.route('/map', methods=['GET'])
 def map():
 
@@ -574,6 +565,9 @@ def update_map():
     access_clients = users[username]["AccessCL"]
     df = load_data()
     
+    selected_start_date = request.form['start_date']
+    if selected_start_date != '':
+        df = range_filter(df, pd.to_datetime(selected_start_date),None,Date_col)
 
 
     username = session["username"]
@@ -582,10 +576,9 @@ def update_map():
     df = filter_data_by_cl(session["username"], df, access_clients, access_clients)
 
     #number of passengers not the received data records
-    country_uq_dict = unique_counter(df, Country_Name_Col)
+    country_rates = column_sum(df, Country_Name_Col, Volume_ID_Col)
 
-    return jsonify({'country_uq_dict': country_uq_dict})
-
+    return jsonify({'country_uq_dict': country_rates})
 
 
 @app.route('/logout', methods=['GET'])
