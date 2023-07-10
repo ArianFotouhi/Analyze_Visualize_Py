@@ -50,24 +50,24 @@ class Plotter:
         dict_keys = sorted(color_samples.keys())
 
         red = 0.0
-        green = 187/255
-        blue = 0.0
+        green = 47/255
+        blue = 111/255
         self.plot_gradient_intensity
         for i in range(len(color_samples)):
             if i != (len(color_samples) - 1):
-                c_gradient = (color_samples[dict_keys[i+1]] - color_samples[dict_keys[i]]) / (color_samples[dict_keys[i]])
+                c_gradient = (color_samples[dict_keys[i+1]] - color_samples[dict_keys[i]]) / (color_samples[dict_keys[i]])*2.5
                 red -= c_gradient*self.plot_gradient_intensity
-                green += c_gradient*self.plot_gradient_intensity
+                blue += c_gradient*self.plot_gradient_intensity
 
                 if red < 0:
                     red = 0
                 elif red > 1.0:
                     red = 1.0
 
-                if green < 0:
-                    green = 0
-                elif green > 1.0:
-                    green = 1.0
+                if blue < 0:
+                    blue = 0
+                elif blue > 1.0:
+                    blue = 1.0
 
                 ax.plot(
                     self.x[dict_keys[i]: dict_keys[i + 1] + 1],
@@ -80,7 +80,7 @@ class Plotter:
             else:
                 ax.plot(self.x[dict_keys[i]:], self.y[dict_keys[i]:], color=[red, green, blue])
         
-        ax.set_title(self.title, fontfamily='Roboto', fontsize=16, fontweight='bold')
+        ax.set_title(self.title, fontfamily='Roboto', fontsize=16, fontweight='bold',color='#002F6F',)
         ax.set_xlabel(self.xlabel, fontfamily='Roboto', fontsize=7, fontweight='bold')
         ax.set_ylabel(self.ylabel, fontfamily='Roboto', fontsize=10, fontweight='bold')
 
@@ -99,7 +99,10 @@ class Plotter:
 
         if self.no_data_error:
             ax.text(0.5, 0.2, self.no_data_error, horizontalalignment='center', verticalalignment='center',
-                    transform=ax.transAxes, color='red', fontsize=12, fontweight='bold')
+                    transform=ax.transAxes, color='red', fontsize=12, fontweight='bold',
+                    bbox={'facecolor': 'white', 'edgecolor': 'black', 'linewidth': 1})
+
+         
         
         growth_percentage = self.calculate_growth_percentage()
         if growth_percentage is not None:
@@ -149,5 +152,5 @@ class Plotter:
         logo_x = 10
         logo_y = fig.bbox.height - logo_height - 10
         
-        # Overlay the logo on the plot
-        fig.figimage(logo, xo=logo_x, yo=logo_y, alpha=0.8)
+        # Overlay the lofgo on the plot
+        fig.figimage(logo, xo=logo_x, yo=logo_y, alpha=0.4)
