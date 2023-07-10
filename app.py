@@ -68,7 +68,7 @@ def home():
 
     # notifications = get_notifications(inact_loung_num,inactive_clients,crowdedness)
     
-    setting = {'time_alert':np.arange(1,30), 'plot_interval':np.arange(2,7)}
+    setting = {'time_alert':np.arange(2,7), 'plot_interval':np.arange(2,7)}
 
     # stat_list = [act_loung_num, inact_loung_num,vol_curr, vol_prev, len(active_clients), len(inactive_clients),inactive_lounges, crowdedness]
     
@@ -438,7 +438,7 @@ def dashboard(client):
     cities_dict = Markup(cities_dict)
 
 
-    setting = {'time_alert':np.arange(1,30), 'plot_interval':np.arange(1,30)}
+    setting = {'time_alert':np.arange(2,7), 'plot_interval':np.arange(2,7)}
 
     file_name = convert_to_secure_name(client)
 
@@ -469,10 +469,10 @@ def update_dashboard():
     client = request.form['client']
     page_user = request.form['page_user']
 
-    # selected_lounge = request.form['lounge_name']
-    # selected_airport = request.form['airport_name']
-    # selected_city = request.form['city_name']
-    # selected_country = request.form['country_name']
+    selected_lounge = request.form['lounge_name']
+    selected_airport = request.form['airport_name']
+    selected_city = request.form['city_name']
+    selected_country = request.form['country_name']
 
     time_alert = int(request.form['time_alert']) 
     plot_interval = int(request.form['plt_interval'])
@@ -484,6 +484,17 @@ def update_dashboard():
     selected_start_date = request.form['start_date']
     selected_end_date = request.form['end_date']
     
+    if selected_lounge:
+        df = df[df[Lounge_ID_Col] == selected_lounge]
+    print('value of airport', selected_airport)
+    if selected_airport:
+        df = df[df[Airport_Name_Col] == selected_airport]
+
+    if selected_city:
+        df = df[df[City_Name_Col] == selected_city]
+
+    if selected_country:
+        df = df[df[Country_Name_Col] == selected_country]
 
     update_time_alert(time_alert)
     update_plot_interval(plot_interval)
@@ -508,13 +519,17 @@ def update_dashboard():
     if selected_start_date != '' or selected_end_date!= '':
         df = range_filter(df, pd.to_datetime(selected_start_date),pd.to_datetime(selected_end_date),Date_col)
 
-    #scales: sec, min, hour, day, mo, year
-    # no_data_dict = stream_on_off(scale='day', length=time_alert)
+
 
 
     if page_user == 'dashboard':
         lg_list = list(lg_list)
         lg_list = lg_list[:3]
+
+
+
+    #scales: sec, min, hour, day, mo, year
+    no_data_dict = stream_on_off(scale='day', length=time_alert, level='lg', component_list = lg_list)
 
     #alphabet
     #pax_rate
@@ -522,7 +537,6 @@ def update_dashboard():
     image_list=[]
     
     df = filter_data_by_cl(session["username"], df, client, access_clients)
-
     for lounge in lg_list:
         lounge_df = dropdown_menu_filter(df,Lounge_ID_Col ,lounge)
         
@@ -532,9 +546,17 @@ def update_dashboard():
         date_list = record_lister(lounge_df[Date_col].dt.strftime('%Y-%m-%d %H:%M:%S').unique().tolist(), plot_interval*24)
         vol_sum_list = record_sum_calculator(lounge_df.groupby(Date_col)[Volume_ID_Col].sum().to_list(), plot_interval*24)
         
+        
+        if str(lounge) in list(no_data_dict.keys()):
+            no_data_error = f"Last update {no_data_dict[str(lounge)]}"
+        else:
+            no_data_error = None
+        
+        if not vol_sum_list:
+            continue
 
         plt_title = f'Lounge {lounge}'
-        pltr = Plotter(date_list, vol_sum_list, plt_title , plt_thickness= plt_thickness ,xlabel='',  ylabel='Passebgers Rate', no_data_error= '', 
+        pltr = Plotter(date_list, vol_sum_list, plt_title , plt_thickness= plt_thickness ,xlabel='',  ylabel='Passebgers Rate', no_data_error= no_data_error, 
                            client= client, plot_gradient_intensity=plot_gradient_intensity)
         
         image_info = pltr.save_plot()  
