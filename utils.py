@@ -102,54 +102,103 @@ def ParameterCounter(name,base, to_be_counted):
   
 
 
-def stream_on_off(scale='sec', length=10):
-    username = session["username"]
-    access_clients = users[username]["AccessCL"]
-    no_data = {}
-    df = load_data()
+def stream_on_off(scale='sec', length=10, level='cl',component_list =[]):
     
-    for i in access_clients:
+    
+    if level == 'cl':
+        username = session["username"]
+        component_list = users[username]["AccessCL"]
+        no_data = {}
+        df = load_data()
+        
+        for i in component_list:
 
-        # Filter the DataFrame for the last record with id=X
-        last_record = df[df[CLName_Col] == i].tail(1)
-        # Get the timestamp of the last record
-        last_time = last_record[Date_col].iat[0]
+            # Filter the DataFrame for the last record with id=X
+            last_record = df[df[CLName_Col] == i].tail(1)
+            # Get the timestamp of the last record
+            last_time = last_record[Date_col].iat[0]
 
-     
-
-        # Calculate the time difference based on the specified scale and length
-        if scale == 'sec':
-            time_diff = datetime.now() - last_time
-            threshold = timedelta(seconds=int(length))
-        elif scale == 'min':
-            time_diff = (datetime.now() - last_time) // timedelta(minutes=1)
-            threshold = int(length)
-        elif scale == 'hour':
-            time_diff = (datetime.now() - last_time) // timedelta(hours=1)
-            threshold = int(length)
-        elif scale == 'day':
-            time_diff = (datetime.now() - last_time) // timedelta(days=1)
-            threshold = int(length)
-        elif scale == 'mo':
-            time_diff = (datetime.now() - last_time) // timedelta(days=30)
-            threshold = int(length)
-        elif scale == 'year':
-            time_diff = (datetime.now() - last_time) // timedelta(days=365)
-            threshold = int(length)
-        else:
-            raise ValueError("Invalid scale. Please choose one of 'sec', 'min', 'hour', 'day', 'min', or 'year'.")
-
-        # Check if the time difference is more than the specified threshold
-
-        # no_data[i] = [last_time-time_diff]
-
-        if time_diff > threshold:
-            # no_data[i].append(last_time)
-            no_data[i] = last_time
         
 
-    return no_data
+            # Calculate the time difference based on the specified scale and length
+            if scale == 'sec':
+                time_diff = datetime.now() - last_time
+                threshold = timedelta(seconds=int(length))
+            elif scale == 'min':
+                time_diff = (datetime.now() - last_time) // timedelta(minutes=1)
+                threshold = int(length)
+            elif scale == 'hour':
+                time_diff = (datetime.now() - last_time) // timedelta(hours=1)
+                threshold = int(length)
+            elif scale == 'day':
+                time_diff = (datetime.now() - last_time) // timedelta(days=1)
+                threshold = int(length)
+            elif scale == 'mo':
+                time_diff = (datetime.now() - last_time) // timedelta(days=30)
+                threshold = int(length)
+            elif scale == 'year':
+                time_diff = (datetime.now() - last_time) // timedelta(days=365)
+                threshold = int(length)
+            else:
+                raise ValueError("Invalid scale. Please choose one of 'sec', 'min', 'hour', 'day', 'min', or 'year'.")
 
+            # Check if the time difference is more than the specified threshold
+
+            # no_data[i] = [last_time-time_diff]
+
+            if time_diff > threshold:
+                # no_data[i].append(last_time)
+                no_data[i] = last_time
+            
+
+        return no_data
+    
+    elif level == 'lg':
+        
+        no_data = {}
+        df = load_data()
+
+        for i in component_list:
+
+            # Filter the DataFrame for the last record with id=X
+            last_record = df[df[Lounge_ID_Col] == i].tail(1)
+            # Get the timestamp of the last record
+            last_time = last_record[Date_col].iat[0]
+
+        
+
+            # Calculate the time difference based on the specified scale and length
+            if scale == 'sec':
+                time_diff = datetime.now() - last_time
+                threshold = timedelta(seconds=int(length))
+            elif scale == 'min':
+                time_diff = (datetime.now() - last_time) // timedelta(minutes=1)
+                threshold = int(length)
+            elif scale == 'hour':
+                time_diff = (datetime.now() - last_time) // timedelta(hours=1)
+                threshold = int(length)
+            elif scale == 'day':
+                time_diff = (datetime.now() - last_time) // timedelta(days=1)
+                threshold = int(length)
+            elif scale == 'mo':
+                time_diff = (datetime.now() - last_time) // timedelta(days=30)
+                threshold = int(length)
+            elif scale == 'year':
+                time_diff = (datetime.now() - last_time) // timedelta(days=365)
+                threshold = int(length)
+            else:
+                raise ValueError("Invalid scale. Please choose one of 'sec', 'min', 'hour', 'day', 'min', or 'year'.")
+
+            # Check if the time difference is more than the specified threshold
+
+            # no_data[i] = [last_time-time_diff]
+
+            if time_diff > threshold:
+                # no_data[i].append(last_time)
+                no_data[i] = last_time
+            
+
+        return no_data
 
 
 def get_latest_lounge_status(df):
