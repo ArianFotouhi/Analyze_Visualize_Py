@@ -153,4 +153,4 @@ class Plotter:
         logo_y = fig.bbox.height - logo_height - 10
         
         # Overlay the lofgo on the plot
-        fig.figimage(logo, xo=logo_x, yo=logo_y, alpha=0.4)
+        fig.figimage(logo, xo=logo_x, yo=logo_y, alpha=0.85)
