@@ -486,7 +486,6 @@ def update_dashboard():
     
     if selected_lounge:
         df = df[df[Lounge_ID_Col] == selected_lounge]
-    print('value of airport', selected_airport)
     if selected_airport:
         df = df[df[Airport_Name_Col] == selected_airport]
 
