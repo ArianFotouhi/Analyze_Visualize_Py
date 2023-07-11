@@ -12,10 +12,11 @@ from PIL import Image
 
 
 class Plotter:
-    def __init__(self, x, y, title, plt_thickness=2.0, xlabel='', ylabel='', no_data_error='', client='', plot_gradient_intensity=0.5 ):
+    def __init__(self, x, y, title, growth_rate=0, plt_thickness=2.0, xlabel='', ylabel='', no_data_error='', client='', plot_gradient_intensity=0.5):
         self.x = x
         self.y = y
         self.title = title
+        self.growth_rate = growth_rate
         self.xlabel = xlabel
         self.ylabel = ylabel
         self.no_data_error = no_data_error
@@ -23,13 +24,6 @@ class Plotter:
         self.plot_gradient_intensity= plot_gradient_intensity
         self.plt_thickness = plt_thickness
     
-    def calculate_growth_percentage(self):
-        # Calculate the growth percentage of the last two points of y
-        if len(self.y) >= 2:
-            growth_percentage = ((self.y[-1] - self.y[-2]) / self.y[-2]) * 100
-            return growth_percentage
-        else:
-            return None
     
     def generate_plot(self):
         fig, ax = plt.subplots()  # Create a new Figure and Axes object
@@ -55,7 +49,12 @@ class Plotter:
         self.plot_gradient_intensity
         for i in range(len(color_samples)):
             if i != (len(color_samples) - 1):
-                c_gradient = (color_samples[dict_keys[i+1]] - color_samples[dict_keys[i]]) / (color_samples[dict_keys[i]])*2.5
+
+                if color_samples[dict_keys[i]] !=0:
+                    c_gradient = (color_samples[dict_keys[i+1]] - color_samples[dict_keys[i]]) / (color_samples[dict_keys[i]])*2.5
+                else:
+                    c_gradient=0.3
+                
                 red -= c_gradient*self.plot_gradient_intensity
                 blue += c_gradient*self.plot_gradient_intensity
 
@@ -104,7 +103,7 @@ class Plotter:
 
          
         
-        growth_percentage = self.calculate_growth_percentage()
+        growth_percentage = self.growth_rate
         if growth_percentage is not None:
             text = f"Growth: {growth_percentage:.2f}%"
             color = 'green' if growth_percentage > 0 else 'red'
