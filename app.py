@@ -1,5 +1,5 @@
 from flask import Flask, render_template, request, redirect, session, jsonify, url_for
-from utils import load_data, filter_data_by_cl, dropdown_menu_filter, LoungeCounter, stream_on_off, active_inactive_lounges, active_clients_percent, volume_rate, filter_unique_val_dict, lounge_crowdedness, get_notifications, ParameterCounter, record_sum_calculator, record_lister, crowdedness_alert, range_filter, order_clients, update_time_alert, update_plot_interval, column_sum
+from utils import load_data, filter_data_by_cl, dropdown_menu_filter, LoungeCounter, stream_on_off, active_inactive_lounges, active_clients_percent, volume_rate, filter_unique_val, lounge_crowdedness, get_notifications, ParameterCounter, record_sum_calculator, record_lister, crowdedness_alert, range_filter, order_clients, update_time_alert, update_plot_interval, column_sum, plot_interval_handler
 from config import Date_col, Lounge_ID_Col, CLName_Col, Volume_ID_Col,  users, Airport_Name_Col, City_Name_Col, Country_Name_Col
 from authentication import Authentication
 import numpy as np
@@ -61,10 +61,10 @@ def home():
     # active_clients, inactive_clients = active_clients_percent(access_clients, active_lounges, inactive_lounges)
     # _, vol_curr, vol_prev = volume_rate(access_clients, amount=7)
 
-    cl_lounges_ = filter_unique_val_dict(df, 'lounges')
-    airport_uq_list = filter_unique_val_dict(df, 'airport')
-    city_uq_list = filter_unique_val_dict(df, 'city')
-    country_uq_list = filter_unique_val_dict(df, 'country')
+    cl_lounges_ = filter_unique_val(df, 'lounges')
+    airport_uq_list = filter_unique_val(df, 'airport')
+    city_uq_list = filter_unique_val(df, 'city')
+    country_uq_list = filter_unique_val(df, 'country')
 
     # notifications = get_notifications(inact_loung_num,inactive_clients,crowdedness)
     
@@ -165,8 +165,12 @@ def update_plot():
         else:
                 inactives = 0
 
-        date_list = record_lister(df[Date_col].dt.strftime('%Y-%m-%d %H:%M:%S').unique().tolist(), plot_interval*24)
-        vol_sum_list = record_sum_calculator(df.groupby(Date_col)[Volume_ID_Col].sum().to_list(), plot_interval*24)
+
+
+     
+        date_list, vol_sum_list = plot_interval_handler(df, plot_interval*1440)
+
+
 
         trace = {
             'x': date_list,
@@ -175,7 +179,7 @@ def update_plot():
             'hovertemplate': '%{text}',
             'type': 'scatter',
             'mode': 'lines',
-            'name': 'Rates'
+            'name': 'Passengers'
         }
 
         layout = {
@@ -238,14 +242,32 @@ def update_plot():
         
         crowdedness = lounge_crowdedness(date='latest', alert = crowdedness_alert, access_clients=access_clients)
         notifications = get_notifications(inact_loung_num, inactive_clients, crowdedness)
-        
-        #alphabet
-        #pax_rate
-        clients = order_clients(df,access_clients,selected_client_order, optional=['day',time_alert],plot_interval=plot_interval)
+
+        cl_info = {}
+        for client in access_clients:
+            client_df = filter_data_by_cl(session["username"], df, client, access_clients)
+            date_list, vol_sum_list = plot_interval_handler(client_df, plot_interval*1440)
+            
+            if vol_sum_list[-2] != 0:
+                cl_growth_rate = 100*(vol_sum_list[-1] - vol_sum_list[-2]) / (vol_sum_list[-2])
+            else:
+                cl_growth_rate = 100
+
+            cl_info[client] = [date_list, vol_sum_list, cl_growth_rate]
+        if selected_client_order == 'alert':
+            cl_data = cl_info
+        else:
+            cl_data = ''
+
+
+
+        clients = order_clients(df,access_clients,selected_client_order, optional=['day',time_alert],plot_interval=plot_interval, cl_data=cl_data)
         image_list=[]
         for client in clients:
             client_df = filter_data_by_cl(session["username"], df, client, access_clients)
-
+            date_list = cl_info[client][0]
+            vol_sum_list = cl_info[client][1]
+            growth_rate = cl_info[client][2]
             # lounge_num  = LoungeCounter(str(client))
 
             if str(client) in active_lounges:
@@ -261,16 +283,19 @@ def update_plot():
 
 
             
-            date_list = record_lister(client_df[Date_col].dt.strftime('%Y-%m-%d %H:%M:%S').unique().tolist(), plot_interval*24)
-            vol_sum_list = record_sum_calculator(client_df.groupby(Date_col)[Volume_ID_Col].sum().to_list(), plot_interval*24)
+            # date_list = record_lister(client_df[Date_col].dt.strftime('%Y-%m-%d %H:%M:%S').unique().tolist(), plot_interval*24)
+            # vol_sum_list = record_sum_calculator(client_df.groupby(Date_col)[Volume_ID_Col].sum().to_list(), plot_interval*24)
+
+            
+
 
             if str(client) in list(no_data_dict.keys()):
                 no_data_error = f"Last update {no_data_dict[str(client)]}"
             else:
                 no_data_error = None
-        
+            
             plt_title = f'{client}, Lounge {actives}/{actives + inactives}, AP No. {airport_num}'
-            pltr = Plotter(date_list, vol_sum_list, plt_title , plt_thickness= plt_thickness ,xlabel='',  ylabel='Passebgers Rate', no_data_error= no_data_error, 
+            pltr = Plotter(date_list, vol_sum_list, plt_title , plt_thickness= plt_thickness ,xlabel='',  ylabel='Passengers',growth_rate=growth_rate, no_data_error= no_data_error, 
                            client= client, plot_gradient_intensity=plot_gradient_intensity)
             image_info = pltr.save_plot()  
 
@@ -307,11 +332,6 @@ def update_plot():
                 error_message = None
 
             errors.append(error_message)
-
-      
-        
-
-
     
         return jsonify({'traces': traces, 'layouts': layouts , 'errors': errors, 'image':True,
                         'lounge_act_num':act_loung_num, 'lounge_inact_num':inact_loung_num,
@@ -367,16 +387,16 @@ def dashboard_lounge(client):
     df = load_data()
     filtered_df = dropdown_menu_filter(df,CLName_Col ,client)
 
-    cl_lounges_ = filter_unique_val_dict(filtered_df, 'lounges')
-    airport_uq_list = filter_unique_val_dict(filtered_df,'airport') #return an array
-    city_uq_list = filter_unique_val_dict(filtered_df, 'city') #return an array
-    country_uq_list = filter_unique_val_dict(filtered_df, 'country')
+    cl_lounges_ = filter_unique_val(filtered_df, 'lounges')
+    airport_uq_list = filter_unique_val(filtered_df,'airport') #return an array
+    city_uq_list = filter_unique_val(filtered_df, 'city') #return an array
+    country_uq_list = filter_unique_val(filtered_df, 'country')
 
     cities_dict = get_coordinates(city_uq_list) #[lat, lon, city, country]
     cities_dict = Markup(cities_dict)
 
 
-    setting = {'time_alert':np.arange(1,30), 'plot_interval':np.arange(1,30)}
+    setting = {'time_alert':np.arange(2,7), 'plot_interval':np.arange(2,7)}
 
     file_name = convert_to_secure_name(client)
 
@@ -400,11 +420,11 @@ def dashboard_airport(client):
     df = load_data()
     filtered_df = dropdown_menu_filter(df,CLName_Col ,client)
 
-    airport_uq_list = filter_unique_val_dict(filtered_df,'airport') #return an array
+    airport_uq_list = filter_unique_val(filtered_df,'airport') #return an array
 
-    dict_airport_info = {}
-    for i in airport_uq_list:
-        temp_df = filtered_df[filtered_df[Airport_Name_Col]==i]
+    # dict_airport_info = {}
+    # for i in airport_uq_list:
+    #     temp_df = filtered_df[filtered_df[Airport_Name_Col]==i]
         
 
     file_name = convert_to_secure_name(client)
@@ -429,10 +449,10 @@ def dashboard(client):
     df = load_data()
     filtered_df = dropdown_menu_filter(df,CLName_Col ,client)
 
-    cl_lounges_ = filter_unique_val_dict(filtered_df, 'lounges')
-    airport_uq_list = filter_unique_val_dict(filtered_df,'airport') #return an array
-    city_uq_list = filter_unique_val_dict(filtered_df, 'city') #return an array
-    country_uq_list = filter_unique_val_dict(filtered_df, 'country')
+    cl_lounges_ = filter_unique_val(filtered_df, 'lounges')
+    airport_uq_list = filter_unique_val(filtered_df,'airport') #return an array
+    city_uq_list = filter_unique_val(filtered_df, 'city') #return an array
+    country_uq_list = filter_unique_val(filtered_df, 'country')
 
     cities_dict = get_coordinates(city_uq_list) #[lat, lon, city, country]
     cities_dict = Markup(cities_dict)
@@ -511,7 +531,7 @@ def update_dashboard():
 
     filtered_df = dropdown_menu_filter(df, CLName_Col, client)
     
-    lg_list = filter_unique_val_dict(filtered_df, 'lounges')[client]
+    lg_list = filter_unique_val(filtered_df, 'lounges')
 
 
 
@@ -536,14 +556,20 @@ def update_dashboard():
     image_list=[]
     
     df = filter_data_by_cl(session["username"], df, client, access_clients)
+
+
+
     for lounge in lg_list:
         lounge_df = dropdown_menu_filter(df,Lounge_ID_Col ,lounge)
+        date_list, vol_sum_list = plot_interval_handler(lounge_df, plot_interval*1440)
+        
+        if vol_sum_list[-2] != 0:
+            lg_growth_rate = 100*(vol_sum_list[-1] - vol_sum_list[-2]) / (vol_sum_list[-2])
+        else:
+            lg_growth_rate = 100
+
         
 
-
-        
-        date_list = record_lister(lounge_df[Date_col].dt.strftime('%Y-%m-%d %H:%M:%S').unique().tolist(), plot_interval*24)
-        vol_sum_list = record_sum_calculator(lounge_df.groupby(Date_col)[Volume_ID_Col].sum().to_list(), plot_interval*24)
         
         
         if str(lounge) in list(no_data_dict.keys()):
@@ -555,8 +581,8 @@ def update_dashboard():
             continue
 
         plt_title = f'Lounge {lounge}'
-        pltr = Plotter(date_list, vol_sum_list, plt_title , plt_thickness= plt_thickness ,xlabel='',  ylabel='Passebgers Rate', no_data_error= no_data_error, 
-                           client= client, plot_gradient_intensity=plot_gradient_intensity)
+        pltr = Plotter(date_list, vol_sum_list, plt_title , plt_thickness= plt_thickness ,xlabel='',  ylabel='Passengers', no_data_error= no_data_error, 
+                           client= client, plot_gradient_intensity=plot_gradient_intensity, growth_rate=lg_growth_rate)
         
         image_info = pltr.save_plot()  
         image_list.append(image_info)
