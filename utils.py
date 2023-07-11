@@ -530,6 +530,10 @@ def record_sum_calculator(data,n, last_n=None):
 
 
 def record_lister(data, n):
+
+
+
+
     num_groups = len(data) // n
     
     result = []
