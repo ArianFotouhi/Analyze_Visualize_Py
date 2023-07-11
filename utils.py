@@ -392,32 +392,34 @@ def column_sum(df, column_name,sum_on_column):
 
     return result
 
-def filter_unique_val_dict(df, column):
+def filter_unique_val(df, column):
     if column =='lounges':
-        username = session["username"]
-        cl_list = users[username]["AccessCL"]
+       
+       
+        # username = session["username"]
+        # cl_list = users[username]["AccessCL"]
         
-        actives, inactives, _, _ = active_inactive_lounges(users[username]["AccessCL"])
+        # actives, inactives, _, _ = active_inactive_lounges(users[username]["AccessCL"])
 
         
-        output = {}
-        for i in cl_list:
+        # output = {}
+        # for i in cl_list:
             
-            if i in actives and i in inactives:
-                actives[i] = list(actives[i])
-                actives[i].extend(list(inactives[i]))
-                output[i] = list(set(actives[i]))
-            elif i in actives:
-                output[i] = actives[i]
-            else:
-                output[i] = inactives[i]
+        #     if i in actives and i in inactives:
+        #         actives[i] = list(actives[i])
+        #         actives[i].extend(list(inactives[i]))
+        #         output[i] = list(set(actives[i]))
+        #     elif i in actives:
+        #         output[i] = actives[i]
+        #     else:
+        #         output[i] = inactives[i]
         
-        output[''] = []
-        for i in output:
-            if i != '':
-                output[''].extend(output[i])
-
-        return output
+        # output[''] = []
+        # for i in output:
+        #     if i != '':
+        #         output[''].extend(output[i])
+        unqiue_vals = df[Lounge_ID_Col].unique()
+        return unqiue_vals
     
     elif column == 'airport':
         unqiue_vals = df[Airport_Name_Col].unique()
@@ -506,47 +508,30 @@ def get_latest_date_time(df):
 
     return latest_date
 
-def record_sum_calculator(data,n, last_n=None):
-    num_groups = len(data) // n
+def plot_interval_handler(df, n):
+
+    dates = pd.to_datetime(df[Date_col])
     
-    result = []
-    # Iterate over the groups and calculate the sum for each group
-    if last_n:
-        for i in range(num_groups-last_n,num_groups):
-            start_index = i * n
-            end_index = start_index + n
-            group_sum = data[start_index:end_index]
-            group_sum = sum(group_sum)
-            result.append(group_sum)
-        return result
-    else:
-        for i in range(num_groups):
-            start_index = i * n
-            end_index = start_index + n
-            group_sum = data[start_index:end_index]
-            group_sum = sum(group_sum)
-            result.append(group_sum)
-        return result
+    oldest_record = dates.min()
+    latest_record = dates.max()
 
-
-def record_lister(data, n):
-
-
-
-
-    num_groups = len(data) // n
+    start_ = oldest_record
+    diff = pd.Timedelta(minutes=n)
     
-    result = []
-    # Iterate over the groups and calculate the sum for each group
-    for i in range(num_groups):
-        start_index = i * n
-        sliced_obj = data[start_index]
+    date_list = []
+    volume_list=[]
+    while start_ <= latest_record:
         
-        result.append(sliced_obj)
-    return result
+        end_ = start_ + diff
+        new_df = range_filter(df, pd.to_datetime(start_),pd.to_datetime(end_),Date_col)
+        sum_rate = new_df[Volume_ID_Col].sum()
+        date_list.append(start_.strftime('%Y-%m-%d %H:%M:%S'))
+        volume_list.append(int(sum_rate))
+        start_ = end_
+    return date_list, volume_list
 
 
-def order_clients(df,clients, order, optional, plot_interval=1):
+def order_clients(df,clients, order, optional, cl_data, plot_interval=1):
     if order =='alphabet':
         clients.sort()
         
@@ -568,21 +553,17 @@ def order_clients(df,clients, order, optional, plot_interval=1):
         access_clients = users[username]["AccessCL"]
         
 
-        no_date = stream_on_off(scale=optional[0],length=optional[1])
         #order based on the max of current_rec[px] - last_rec[px]
         #then do below to oreder (if applicable)
         clients_dict = {}
         for client in clients:
-            client_df = filter_data_by_cl(session["username"], df, client, access_clients)
-            vol_sum_list = record_sum_calculator(client_df.groupby(Date_col)[Volume_ID_Col].sum().to_list(), plot_interval*24, last_n=2)
-            if vol_sum_list[-2] != 0:
-                clients_dict[client] = (vol_sum_list[-1] - vol_sum_list[-2])/ vol_sum_list[-2]
-            else:
-                clients_dict[client] = 1000
-        clients = sorted(clients_dict, key=lambda k: clients_dict[k], reverse=True)
+            clients_dict[client] = cl_data[client][2]            
+
         
+        clients = sorted(clients_dict, key=lambda k: abs(clients_dict[k]), reverse=True)
 
 
+        no_date = stream_on_off(scale=optional[0],length=optional[1])
         for client in clients:
             if client in no_date :
                 clients.remove(client)
