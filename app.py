@@ -1,5 +1,5 @@
 from flask import Flask, render_template, request, redirect, session, jsonify, url_for
-from utils import load_data, filter_data_by_cl, dropdown_menu_filter, LoungeCounter, stream_on_off, active_inactive_lounges, active_clients_percent, volume_rate, filter_unique_val, lounge_crowdedness, get_notifications, ParameterCounter, crowdedness_alert, range_filter, order_clients, update_time_alert, update_plot_interval, column_sum, plot_interval_handler
+from utils import load_data, filter_data_by_cl, dropdown_menu_filter, LoungeCounter, stream_on_off, active_inactive_lounges, active_clients_percent, volume_rate, filter_unique_val, lounge_crowdedness, get_notifications, ParameterCounter, crowdedness_alert, range_filter, order_clients, update_time_alert, update_plot_interval, column_sum, plot_interval_handler, airport_loc, fetch_wikipedia_summary
 from config import Date_col, Lounge_ID_Col, CLName_Col, Volume_ID_Col,  users, Airport_Name_Col, City_Name_Col, Country_Name_Col
 from authentication import Authentication
 import numpy as np
@@ -9,6 +9,10 @@ from conversion import convert_to_secure_name
 from location import get_coordinates
 
 from markupsafe import Markup
+
+
+from execution_meter import measure_latency
+import time
 
 
 authenticate = Authentication().authenticate
@@ -35,7 +39,6 @@ def login():
         else:
             return render_template("login.html", error="Invalid username or password")
     return render_template("login.html")
-
 
 @app.route('/home', methods=['GET','POST'])
 def home():
@@ -75,16 +78,12 @@ def home():
     return render_template('index.html', data= data, clients= access_clients, cl_lounges_= cl_lounges_, 
                            airports = airport_uq_list, cities = city_uq_list, countries = country_uq_list, setting=setting)
 
-
 @app.route('/update_plot', methods=['POST'])
 def update_plot():
 
     username = session["username"]
     access_clients = users[username]["AccessCL"]
     df = load_data()
-
-
-
 
 
     selected_client = request.form['client']
@@ -113,7 +112,6 @@ def update_plot():
 
 
 
-    
 
     #scales: sec, min, hour, day, mo, year
     no_data_dict = stream_on_off(scale='day', length=time_alert)
@@ -166,6 +164,7 @@ def update_plot():
                 inactives = 0
 
 
+    
 
      
         date_list, vol_sum_list = plot_interval_handler(df, plot_interval*1440)
@@ -229,6 +228,7 @@ def update_plot():
                         'active_clients_num':active_clients_num, 'inactive_clients_num':inactive_clients_num})
 
     else:
+        
         traces = []
         layouts = []
         errors = []
@@ -242,14 +242,19 @@ def update_plot():
         
         crowdedness = lounge_crowdedness(date='latest', alert = crowdedness_alert, access_clients=access_clients)
         notifications = get_notifications(inact_loung_num, inactive_clients, crowdedness)
-
+        
         cl_info = {}
+        
+        #0.6 seconds
         for client in access_clients:
             client_df = filter_data_by_cl(session["username"], df, client, access_clients)
             date_list, vol_sum_list = plot_interval_handler(client_df, plot_interval*1440)
             
-            if vol_sum_list[-2] != 0:
-                cl_growth_rate = 100*(vol_sum_list[-1] - vol_sum_list[-2]) / (vol_sum_list[-2])
+            if len(vol_sum_list)>1:
+                if vol_sum_list[-2] != 0:
+                    cl_growth_rate = 100*(vol_sum_list[-1] - vol_sum_list[-2]) / (vol_sum_list[-2])
+                else:
+                    cl_growth_rate = 100
             else:
                 cl_growth_rate = 100
 
@@ -261,9 +266,13 @@ def update_plot():
 
 
 
+        #0.08 seconds
         clients = order_clients(df,access_clients,selected_client_order, optional=['day',time_alert],plot_interval=plot_interval, cl_data=cl_data)
         image_list=[]
+        
+        #half latency of all route latency 1.4 seconds
         for client in clients:
+
             client_df = filter_data_by_cl(session["username"], df, client, access_clients)
             date_list = cl_info[client][0]
             vol_sum_list = cl_info[client][1]
@@ -283,9 +292,11 @@ def update_plot():
 
 
             
+            
             # date_list = record_lister(client_df[Date_col].dt.strftime('%Y-%m-%d %H:%M:%S').unique().tolist(), plot_interval*24)
             # vol_sum_list = record_sum_calculator(client_df.groupby(Date_col)[Volume_ID_Col].sum().to_list(), plot_interval*24)
 
+            
             
 
 
@@ -295,11 +306,20 @@ def update_plot():
                 no_data_error = None
             
             plt_title = f'{client}, Lounge {actives}/{actives + inactives}, AP No. {airport_num}'
+            
+           
+            
             pltr = Plotter(date_list, vol_sum_list, plt_title , plt_thickness= plt_thickness ,xlabel='',  ylabel='Passengers',growth_rate=growth_rate, no_data_error= no_data_error, 
                            client= client, plot_gradient_intensity=plot_gradient_intensity)
+            # ss1 = time.time()
             image_info = pltr.save_plot()  
-
+            # ee1 = time.time()
+            # print(client,'latency in first:', ee1 - ss1)
+            # ss2 = time.time()
             image_list.append(image_info)
+            # ee2 = time.time()
+            # print(client,'latency in second:', ee2 - ss2)
+
 
             trace = {
                 'x': date_list,
@@ -332,13 +352,16 @@ def update_plot():
                 error_message = None
 
             errors.append(error_message)
-    
+
+        
+        
+        
+
         return jsonify({'traces': traces, 'layouts': layouts , 'errors': errors, 'image':True,
                         'lounge_act_num':act_loung_num, 'lounge_inact_num':inact_loung_num,
                         'vol_curr':int(vol_curr),'vol_prev':int(vol_prev),
                         'active_clients_num':active_clients_num, 'inactive_clients_num':inactive_clients_num,
                         'cl':clients, 'image_info':image_list,'notifications':notifications})
-
 
 @app.route('/intelligence_hub', methods=['GET'])
 def intelligence_hub():
@@ -352,7 +375,7 @@ def intelligence_hub():
     active_lounges, inactive_lounges, act_loung_num, inact_loung_num = active_inactive_lounges(access_clients)
     active_clients, inactive_clients = active_clients_percent(access_clients, active_lounges, inactive_lounges)
     crowdedness = lounge_crowdedness(date='latest',alert = crowdedness_alert, access_clients=access_clients)
-    stat_list = [inactive_clients,inactive_lounges,crowdedness]
+    stat_list = [inactive_clients, inactive_lounges, crowdedness]
     
     return render_template('intelligence_hub.html', clients= access_clients, stats= stat_list)
 
@@ -371,6 +394,7 @@ def dormant():
     stat_list = [inactive_clients,inactive_lounges]
     
     return render_template('dormant.html', clients= access_clients, stats= stat_list)
+
 
 
 @app.route('/dashboard/<client>/lounges', methods=['GET'])
@@ -406,6 +430,7 @@ def dashboard_lounge(client):
                             setting=setting, logo_file_name=file_name)  
 
 
+
 @app.route('/dashboard/<client>/airports', methods=['GET'])
 def dashboard_airport(client):   
     if 'username' not in session:
@@ -428,10 +453,25 @@ def dashboard_airport(client):
         
 
     file_name = convert_to_secure_name(client)
+    airport_locs = airport_loc(client, airport_uq_list)
+    airport_locs = Markup(airport_locs)
 
      
     return render_template('airport_monitor.html', client= client, 
-                           airports = list(airport_uq_list),  logo_file_name=file_name)  
+                           airports = list(airport_uq_list),  
+                           logo_file_name=file_name, airport_locs=airport_locs)  
+
+@app.route('/update_airports', methods=['POST'])
+def update_airports():
+    airport_info = None
+    selected_airport = request.form['selected_airport']
+    
+    if selected_airport:
+        airport_info  = fetch_wikipedia_summary(selected_airport+' Airport')
+    
+    return jsonify({'airport_info': airport_info})
+
+
 
 
 @app.route('/dashboard/<client>', methods=['GET'])
@@ -457,7 +497,6 @@ def dashboard(client):
     cities_dict = get_coordinates(city_uq_list) #[lat, lon, city, country]
     cities_dict = Markup(cities_dict)
 
-
     setting = {'time_alert':np.arange(2,7), 'plot_interval':np.arange(2,7)}
 
     file_name = convert_to_secure_name(client)
@@ -477,6 +516,7 @@ def dashboard(client):
     return render_template('dashboard.html', client= client,cl_lounges_= cl_lounges_, 
                            airports = airport_uq_list, cities = city_uq_list, countries = country_uq_list,
                              stats=stat_list, setting=setting, logo_file_name=file_name, cities_dict=cities_dict)
+
 
 
 @app.route('/update_dashboard', methods=['POST'])
@@ -523,10 +563,8 @@ def update_dashboard():
     
 
 
-
     
 
- 
 
 
     filtered_df = dropdown_menu_filter(df, CLName_Col, client)
@@ -557,9 +595,11 @@ def update_dashboard():
     
     df = filter_data_by_cl(session["username"], df, client, access_clients)
 
+   
 
 
     for lounge in lg_list:
+
         lounge_df = dropdown_menu_filter(df,Lounge_ID_Col ,lounge)
         date_list, vol_sum_list = plot_interval_handler(lounge_df, plot_interval*1440)
         
@@ -568,9 +608,9 @@ def update_dashboard():
         else:
             lg_growth_rate = 100
 
-        
+    
 
-        
+       
         
         if str(lounge) in list(no_data_dict.keys()):
             no_data_error = f"Last update {no_data_dict[str(lounge)]}"
@@ -583,12 +623,13 @@ def update_dashboard():
         plt_title = f'Lounge {lounge}'
         pltr = Plotter(date_list, vol_sum_list, plt_title , plt_thickness= plt_thickness ,xlabel='',  ylabel='Passengers', no_data_error= no_data_error, 
                            client= client, plot_gradient_intensity=plot_gradient_intensity, growth_rate=lg_growth_rate)
-        
+
         image_info = pltr.save_plot()  
         image_list.append(image_info)
-
+       
 
     active_lounges, inactive_lounges, act_loung_num, inact_loung_num = active_inactive_lounges([client])
+    
     return jsonify({'image_info': image_list, 'lounge_list': list(lg_list), 
                     'act_loung_num':act_loung_num, 'inact_loung_num':inact_loung_num})
 
