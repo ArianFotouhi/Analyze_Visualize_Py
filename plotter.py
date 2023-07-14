@@ -47,6 +47,11 @@ class Plotter:
         green = 47/255
         blue = 111/255
         self.plot_gradient_intensity
+
+        ######################################## complex color plots################################
+        import time
+
+      
         for i in range(len(color_samples)):
             if i != (len(color_samples) - 1):
 
@@ -78,7 +83,9 @@ class Plotter:
 
             else:
                 ax.plot(self.x[dict_keys[i]:], self.y[dict_keys[i]:], color=[red, green, blue])
-        
+
+
+
         ax.set_title(self.title, fontfamily='Roboto', fontsize=16, fontweight='bold',color='#002F6F',)
         ax.set_xlabel(self.xlabel, fontfamily='Roboto', fontsize=7, fontweight='bold')
         ax.set_ylabel(self.ylabel, fontfamily='Roboto', fontsize=10, fontweight='bold')
@@ -98,18 +105,19 @@ class Plotter:
 
         if self.no_data_error:
             ax.text(0.5, 0.2, self.no_data_error, horizontalalignment='center', verticalalignment='center',
-                    transform=ax.transAxes, color='red', fontsize=12, fontweight='bold',
-                    bbox={'facecolor': 'white', 'edgecolor': 'black', 'linewidth': 1})
+                    transform=ax.transAxes, color='red', fontsize=10, fontweight='bold',
+                    bbox={'facecolor': 'white', 'edgecolor': 'black', 'linewidth': 1,'alpha': 0.5})
 
          
         
         growth_percentage = self.growth_rate
         if growth_percentage is not None:
-            text = f"Growth: {growth_percentage:.2f}%"
+            text = f"Change: {int(growth_percentage)}%"
             color = 'green' if growth_percentage > 0 else 'red'
             marker = '▲' if growth_percentage > 0 else '▼'
             ax.text(0.95, 0.05, marker+' '+text, horizontalalignment='right', verticalalignment='bottom',
-                    transform=ax.transAxes, color=color, fontsize=10, fontweight='bold')
+                    transform=ax.transAxes, color=color, fontsize=10, fontweight='bold',
+                    bbox={'facecolor': 'white', 'edgecolor': 'black', 'linewidth': 1,'alpha': 0.5})
         
         
         if self.client:
