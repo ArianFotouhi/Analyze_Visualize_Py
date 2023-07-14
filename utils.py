@@ -6,8 +6,8 @@ from datetime import datetime, timedelta
 import pytz
 from config import Date_col, Lounge_ID_Col, CLName_Col, Volume_ID_Col, Refuse_Col, Ratio_Col, users, time_alert, crowdedness_alert, Airport_Name_Col, City_Name_Col, Country_Name_Col, plot_interval, plot_gradient_intensity
 from conversion import convert_to_secure_name
-from collections import Counter
-import json
+import requests
+from execution_meter import measure_latency
 
 def update_time_alert(new_value):
     global time_alert
@@ -28,7 +28,6 @@ def logo_render(client):
         return logo
     else:
         return None
-
 
 
 
@@ -571,3 +570,58 @@ def order_clients(df,clients, order, optional, cl_data, plot_interval=1):
 
 
     return clients
+
+def airport_loc(client, airport_list):
+    df = load_data()
+    df = dropdown_menu_filter(df, CLName_Col,client)    
+    
+    airport_ls = []
+    for airport in airport_list:
+        new_df = dropdown_menu_filter(df, Airport_Name_Col,airport) 
+        
+        new_df = new_df.reset_index(drop=True)
+        airport_ls.append([
+                            new_df.loc[0,'Longitude'],
+                            new_df.loc[0,'Latitude'],
+                            airport,
+                            new_df.loc[0,City_Name_Col],
+                            ])
+    
+    return airport_ls
+
+def fetch_wikipedia_summary(search_query):
+    search_url = "https://en.wikipedia.org/w/api.php"
+
+    search_params = {
+        'action': 'opensearch',
+        'search': search_query,
+        'limit': 1,
+        'format': 'json'
+    }
+
+    search_response = requests.get(search_url, params=search_params)
+    search_data = search_response.json()
+    
+    if len(search_data) >= 2:
+        search_results = search_data[1]
+        if len(search_results) > 0:
+            top_result = search_results[0]
+
+            page_url = search_data[3][0]
+
+            summary_url = f"https://en.wikipedia.org/api/rest_v1/page/summary/{top_result}"
+            summary_response = requests.get(summary_url)
+            summary_data = summary_response.json()
+
+            if 'extract' in summary_data:
+                summary = summary_data['extract']
+                return {'summary': summary, 'url': page_url}
+            else:
+                return {'summary': 'Information not found.', 'url': None}
+
+        else:
+            return {'summary': 'Information not found.', 'url': None}
+    else:
+        return {'summary': 'Information not found.', 'url': None}
+
+
