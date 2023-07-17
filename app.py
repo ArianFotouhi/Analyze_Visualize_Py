@@ -243,10 +243,19 @@ def update_plot():
         crowdedness = lounge_crowdedness(date='latest', alert = crowdedness_alert, access_clients=access_clients)
         notifications = get_notifications(inact_loung_num, inactive_clients, crowdedness)
         
-        cl_info = {}
-        
+
+
+        if len(access_clients) > 1:
+            aggregate_plot= True
+        else:
+            aggregate_plot= False
+
+        cl_info = {}       
         #0.6 seconds
-        for client in access_clients:
+        temp_cl_list = access_clients[:]
+        temp_cl_list.insert(0, '')
+
+        for client in temp_cl_list:
             client_df = filter_data_by_cl(session["username"], df, client, access_clients)
             date_list, vol_sum_list = plot_interval_handler(client_df, plot_interval*1440)
             
@@ -270,8 +279,11 @@ def update_plot():
         clients = order_clients(df,access_clients,selected_client_order, optional=['day',time_alert],plot_interval=plot_interval, cl_data=cl_data)
         image_list=[]
         
+        temp_cl_list = clients[:]
+        temp_cl_list.insert(0, '')
+
         #half latency of all route latency 1.4 seconds
-        for client in clients:
+        for client in temp_cl_list:
 
             client_df = filter_data_by_cl(session["username"], df, client, access_clients)
             date_list = cl_info[client][0]
@@ -279,38 +291,38 @@ def update_plot():
             growth_rate = cl_info[client][2]
             # lounge_num  = LoungeCounter(str(client))
 
-            if str(client) in active_lounges:
-                actives = len(active_lounges[str(client)])
-            else:
-                actives = 0
-            if client in inactive_lounges:
-                inactives = len(inactive_lounges[str(client)])
-            else:
-                inactives = 0
-            airport_list, airport_num = ParameterCounter(name = client, base= CLName_Col, to_be_counted= Airport_Name_Col)
-            
-
-
-            
-            
-            # date_list = record_lister(client_df[Date_col].dt.strftime('%Y-%m-%d %H:%M:%S').unique().tolist(), plot_interval*24)
-            # vol_sum_list = record_sum_calculator(client_df.groupby(Date_col)[Volume_ID_Col].sum().to_list(), plot_interval*24)
-
-            
-            
-
-
-            if str(client) in list(no_data_dict.keys()):
-                no_data_error = f"Last update {no_data_dict[str(client)]}"
-            else:
+            if client == '':
+                plt_title = f'Aggregation Plot'
                 no_data_error = None
-            
-            plt_title = f'{client}, Lounge {actives}/{actives + inactives}, AP No. {airport_num}'
+                actives= 1
+                inactives = 1
+                airport_num = 1
+                background_color = '#2D7FFA'
+
+            else:
+
+                if str(client) in active_lounges:
+                    actives = len(active_lounges[str(client)])
+                else:
+                    actives = 0
+                if client in inactive_lounges:
+                    inactives = len(inactive_lounges[str(client)])
+                else:
+                    inactives = 0
+                airport_list, airport_num = ParameterCounter(name = client, base= CLName_Col, to_be_counted= Airport_Name_Col)
+ 
+                if str(client) in list(no_data_dict.keys()):
+                    no_data_error = f"Last update {no_data_dict[str(client)]}"
+                else:
+                    no_data_error = None
+                
+                plt_title = f'{client}, Lounge {actives}/{actives + inactives}, AP No. {airport_num}'
+                background_color = None
             
            
             
             pltr = Plotter(date_list, vol_sum_list, plt_title , plt_thickness= plt_thickness ,xlabel='',  ylabel='Passengers',growth_rate=growth_rate, no_data_error= no_data_error, 
-                           client= client, plot_gradient_intensity=plot_gradient_intensity)
+                           client= client, plot_gradient_intensity=plot_gradient_intensity, background_color=background_color)
             # ss1 = time.time()
             image_info = pltr.save_plot()  
             # ee1 = time.time()
@@ -321,47 +333,14 @@ def update_plot():
             # print(client,'latency in second:', ee2 - ss2)
 
 
-            trace = {
-                'x': date_list,
-                'y': vol_sum_list,
-                'text': vol_sum_list,
-                'hovertemplate': '%{text}',
-                'type': 'scatter',
-                'mode': 'lines',
-                'name': f'Rates'
-            }
-            traces.append(trace)
-
-            layout = {
-                'title': {
-                        'text': f'{client} {actives}/{actives + inactives}, AP No. {airport_num}',
-                        'font': {
-                            'size': 10  # Adjust the font size as desired
-                        }
-                    },
-                # 'title': f'{client} {actives}/{ actives + inactives}, AP No. {airport_num}',
-                'xaxis': {'title': 'Date'},
-                'yaxis': {'title': 'Rate'}
-            }
-           
-            layouts.append(layout)
-           
-            if str(client) in list(no_data_dict.keys()):
-                error_message = f"Last update {no_data_dict[str(client)]}"
-            else:
-                error_message = None
-
-            errors.append(error_message)
-
         
         
         
-
-        return jsonify({'traces': traces, 'layouts': layouts , 'errors': errors, 'image':True,
+        return jsonify({'image':True,
                         'lounge_act_num':act_loung_num, 'lounge_inact_num':inact_loung_num,
                         'vol_curr':int(vol_curr),'vol_prev':int(vol_prev),
                         'active_clients_num':active_clients_num, 'inactive_clients_num':inactive_clients_num,
-                        'cl':clients, 'image_info':image_list,'notifications':notifications})
+                        'cl':temp_cl_list, 'image_info':image_list,'notifications':notifications, 'aggregate_plot':aggregate_plot})
 
 @app.route('/intelligence_hub', methods=['GET'])
 def intelligence_hub():
