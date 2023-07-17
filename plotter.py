@@ -12,7 +12,7 @@ from PIL import Image
 
 
 class Plotter:
-    def __init__(self, x, y, title, growth_rate=0, plt_thickness=2.0, xlabel='', ylabel='', no_data_error='', client='', plot_gradient_intensity=0.5):
+    def __init__(self, x, y, title, background_color=None, growth_rate=0, plt_thickness=2.0, xlabel='', ylabel='', no_data_error='', client='', plot_gradient_intensity=0.5):
         self.x = x
         self.y = y
         self.title = title
@@ -23,10 +23,15 @@ class Plotter:
         self.client = client
         self.plot_gradient_intensity= plot_gradient_intensity
         self.plt_thickness = plt_thickness
+        self.background_color = background_color
     
     
     def generate_plot(self):
         fig, ax = plt.subplots()  # Create a new Figure and Axes object
+
+        if self.background_color:
+            background_color = self.background_color
+            fig.patch.set_facecolor(background_color)
 
         y_length = len(self.y)
         color_samples = {}
