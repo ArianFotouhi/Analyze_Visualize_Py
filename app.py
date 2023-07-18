@@ -633,6 +633,7 @@ def update_map():
     df = load_data()
     
     selected_start_date = request.form['start_date']
+    print('in map js',selected_start_date)
     if selected_start_date != '':
         df = range_filter(df, pd.to_datetime(selected_start_date),None,Date_col)
 
