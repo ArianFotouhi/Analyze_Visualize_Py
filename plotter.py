@@ -107,6 +107,8 @@ class Plotter:
         
         ax.spines['top'].set_visible(False)
         ax.spines['right'].set_visible(False)
+        ax.grid(axis='y')
+
 
         if self.no_data_error:
             ax.text(0.5, 0.2, self.no_data_error, horizontalalignment='center', verticalalignment='center',
