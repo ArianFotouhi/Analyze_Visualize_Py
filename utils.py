@@ -91,14 +91,23 @@ def LoungeCounter(name, modality='cl'):
         cl = df.loc[df[Lounge_ID_Col] == name][CLName_Col][-1:].values[0]
         unique_count = LoungeCounter(name=cl)
         return unique_count, cl
-
-def ParameterCounter(name,base, to_be_counted):
-    df = load_data()
     
-    unique_vals = df.loc[df[base] == name, to_be_counted].unique()
-    unique_count = len(unique_vals)
-    return unique_vals, unique_count
-  
+def ParameterCounter(name, base, to_be_counted, df=None):
+    if df is not None and not df.empty:
+        pass
+    else:
+        df = load_data()
+    if name:
+        unique_vals = df.loc[df[base] == name, to_be_counted].unique()
+        unique_count = len(unique_vals)
+        return unique_vals, unique_count
+    else:
+        unqiue_name = df[base].unique()
+        result_dict= {}
+        for i in unqiue_name:
+            unique_count = df.loc[df[base] == i, to_be_counted].nunique()
+            result_dict[i] = unique_count
+        return result_dict
 
 
 def stream_on_off(scale='sec', length=10, level='cl',component_list =[]):
@@ -542,8 +551,7 @@ def order_clients(df,clients, order, optional, cl_data, plot_interval=1):
         cl_dict = {}
         for client in clients:
             client_df = filter_data_by_cl(session["username"], df, client, access_clients)
-
-            vol_sum_list = record_sum_calculator(client_df.groupby(Date_col)[Volume_ID_Col].sum().to_list(), plot_interval*24)
+            _, vol_sum_list = plot_interval_handler(client_df, plot_interval*1440)
             cl_dict[client] = sum(vol_sum_list)
         clients = sorted(cl_dict,key=cl_dict.get,reverse=True)
     
