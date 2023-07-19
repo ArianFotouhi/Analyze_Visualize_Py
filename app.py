@@ -102,7 +102,7 @@ def update_plot():
     selected_start_date = request.form['start_date']
     selected_end_date = request.form['end_date']
     
-
+    # print('selected_date', selected_start_date)
     update_time_alert(time_alert)
     update_plot_interval(plot_interval)
 
@@ -469,7 +469,8 @@ def dashboard(client):
     filtered_df = dropdown_menu_filter(df,CLName_Col ,client)
 
     cl_lounges_ = filter_unique_val(filtered_df, 'lounges')
-    airport_uq_list = filter_unique_val(filtered_df,'airport') #return an array
+    # airport_uq_list = filter_unique_val(filtered_df,'airport') #return an array
+    airport_uq_dict = ParameterCounter(name=None,base=Airport_Name_Col, to_be_counted = Lounge_ID_Col, df=filtered_df)
     city_uq_list = filter_unique_val(filtered_df, 'city') #return an array
     country_uq_list = filter_unique_val(filtered_df, 'country')
 
@@ -493,7 +494,7 @@ def dashboard(client):
 
     stat_list = [inact_lg_list, crowdedness]
     return render_template('dashboard.html', client= client,cl_lounges_= cl_lounges_, 
-                           airports = airport_uq_list, cities = city_uq_list, countries = country_uq_list,
+                           airports = airport_uq_dict, cities = city_uq_list, countries = country_uq_list,
                              stats=stat_list, setting=setting, logo_file_name=file_name, cities_dict=cities_dict)
 
 
@@ -633,7 +634,7 @@ def update_map():
     df = load_data()
     
     selected_start_date = request.form['start_date']
-    print('in map js',selected_start_date)
+    # print('in map js',selected_start_date)
     if selected_start_date != '':
         df = range_filter(df, pd.to_datetime(selected_start_date),None,Date_col)
 
