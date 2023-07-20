@@ -74,9 +74,8 @@ def home():
     setting = {'time_alert':np.arange(2,7), 'plot_interval':np.arange(2,7)}
 
     # stat_list = [act_loung_num, inact_loung_num,vol_curr, vol_prev, len(active_clients), len(inactive_clients),inactive_lounges, crowdedness]
-    
     return render_template('index.html', data= data, clients= access_clients, cl_lounges_= cl_lounges_, 
-                           airports = airport_uq_list, cities = city_uq_list, countries = country_uq_list, setting=setting)
+                           airports = airport_uq_list, cities = city_uq_list, countries = country_uq_list, setting=setting, user=users[username]["ClientID"])
 
 @app.route('/update_plot', methods=['POST'])
 def update_plot():
@@ -356,7 +355,7 @@ def intelligence_hub():
     crowdedness = lounge_crowdedness(date='latest',alert = crowdedness_alert, access_clients=access_clients)
     stat_list = [inactive_clients, inactive_lounges, crowdedness]
     
-    return render_template('intelligence_hub.html', clients= access_clients, stats= stat_list)
+    return render_template('intelligence_hub.html', clients= access_clients, stats= stat_list, user=username)
 
 
 @app.route('/dormant', methods=['GET'])
@@ -372,7 +371,7 @@ def dormant():
 
     stat_list = [inactive_clients,inactive_lounges]
     
-    return render_template('dormant.html', clients= access_clients, stats= stat_list)
+    return render_template('dormant.html', clients= access_clients, stats= stat_list , user=username)
 
 
 
@@ -406,7 +405,7 @@ def dashboard_lounge(client):
      
     return render_template('lounge_monitor.html', client= client,cl_lounges_= cl_lounges_, 
                            airports = airport_uq_list, cities = city_uq_list, countries = country_uq_list,
-                            setting=setting, logo_file_name=file_name)  
+                            setting=setting, logo_file_name=file_name, user=username)  
 
 
 
@@ -438,7 +437,7 @@ def dashboard_airport(client):
      
     return render_template('airport_monitor.html', client= client, 
                            airports = list(airport_uq_list),  
-                           logo_file_name=file_name, airport_locs=airport_locs)  
+                           logo_file_name=file_name, airport_locs=airport_locs, user=username)  
 
 @app.route('/update_airports', methods=['POST'])
 def update_airports():
@@ -495,7 +494,7 @@ def dashboard(client):
     stat_list = [inact_lg_list, crowdedness]
     return render_template('dashboard.html', client= client,cl_lounges_= cl_lounges_, 
                            airports = airport_uq_dict, cities = city_uq_list, countries = country_uq_list,
-                             stats=stat_list, setting=setting, logo_file_name=file_name, cities_dict=cities_dict)
+                             stats=stat_list, setting=setting, logo_file_name=file_name, cities_dict=cities_dict, user=username)
 
 
 
@@ -623,7 +622,7 @@ def map():
     username = session["username"]
     access_clients = users[username]["AccessCL"]
 
-    return render_template('map.html')
+    return render_template('map.html', user=username)
 
 
 @app.route('/update_map', methods=['POST'])
