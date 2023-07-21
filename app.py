@@ -7,10 +7,7 @@ import pandas as pd
 from plotter import Plotter
 from conversion import convert_to_secure_name
 from location import get_coordinates
-
 from markupsafe import Markup
-
-
 from execution_meter import measure_latency
 import time
 
@@ -359,7 +356,6 @@ def intelligence_hub():
     
     return render_template('intelligence_hub.html', clients= access_clients, stats= stat_list, user=username)
 
-
 @app.route('/dormant', methods=['GET'])
 def dormant():
 
@@ -375,8 +371,6 @@ def dormant():
     
     return render_template('dormant.html', clients= access_clients, stats= stat_list,
                             logo_path = logo_render(users[username]["ClientID"], only_filename=True ))
-
-
 
 @app.route('/dashboard/<client>/lounges', methods=['GET'])
 def dashboard_lounge(client):   
@@ -409,8 +403,6 @@ def dashboard_lounge(client):
     return render_template('lounge_monitor.html', client= client,cl_lounges_= cl_lounges_, 
                            airports = airport_uq_list, cities = city_uq_list, countries = country_uq_list,
                             setting=setting, logo_file_name=file_name, logo_path = logo_render(users[username]["ClientID"], only_filename=True ))  
-
-
 
 @app.route('/dashboard/<client>/airports', methods=['GET'])
 def dashboard_airport(client):   
@@ -452,9 +444,6 @@ def update_airports():
         airport_info  = fetch_wikipedia_summary(selected_airport+' Airport')
     
     return jsonify({'airport_info': airport_info})
-
-
-
 
 @app.route('/dashboard/<client>', methods=['GET'])
 def dashboard(client):
@@ -500,8 +489,6 @@ def dashboard(client):
                            airports = airport_uq_dict, cities = city_uq_list, countries = country_uq_list,
                              stats=stat_list, setting=setting, logo_file_name=file_name, cities_dict=cities_dict,
                              logo_path = logo_render(users[username]["ClientID"], only_filename=True ))
-
-
 
 @app.route('/update_dashboard', methods=['POST'])
 def update_dashboard():
@@ -617,7 +604,6 @@ def update_dashboard():
     return jsonify({'image_info': image_list, 'lounge_list': list(lg_list), 
                     'act_loung_num':act_loung_num, 'inact_loung_num':inact_loung_num})
 
-
 @app.route('/map', methods=['GET'])
 def map():
 
@@ -628,7 +614,6 @@ def map():
     access_clients = users[username]["AccessCL"]
 
     return render_template('map.html', logo_path = logo_render(users[username]["ClientID"], only_filename=True ))
-
 
 @app.route('/update_map', methods=['POST'])
 def update_map():
@@ -652,7 +637,6 @@ def update_map():
     country_rates = column_sum(df, Country_Name_Col, Volume_ID_Col)
 
     return jsonify({'country_uq_dict': country_rates})
-
 
 @app.route('/logout', methods=['GET'])
 def logout():
