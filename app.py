@@ -1,5 +1,5 @@
 from flask import Flask, render_template, request, redirect, session, jsonify, url_for
-from utils import load_data, filter_data_by_cl, dropdown_menu_filter, LoungeCounter, stream_on_off, active_inactive_lounges, active_clients_percent, volume_rate, filter_unique_val, lounge_crowdedness, get_notifications, ParameterCounter, crowdedness_alert, range_filter, order_clients, update_time_alert, update_plot_interval, column_sum, plot_interval_handler, airport_loc, fetch_wikipedia_summary
+from utils import load_data, filter_data_by_cl, dropdown_menu_filter, LoungeCounter, stream_on_off, active_inactive_lounges, active_clients_percent, volume_rate, filter_unique_val, lounge_crowdedness, get_notifications, ParameterCounter, crowdedness_alert, range_filter, order_clients, update_time_alert, update_plot_interval, column_sum, plot_interval_handler, airport_loc, fetch_wikipedia_summary, logo_render
 from config import Date_col, Lounge_ID_Col, CLName_Col, Volume_ID_Col,  users, Airport_Name_Col, City_Name_Col, Country_Name_Col
 from authentication import Authentication
 import numpy as np
@@ -38,7 +38,8 @@ def login():
             return redirect('/home')
         else:
             return render_template("login.html", error="Invalid username or password")
-    return render_template("login.html")
+    return render_template("login.html", 
+                           logo_path = logo_render('Login_page', only_filename=True ))
 
 @app.route('/home', methods=['GET','POST'])
 def home():
@@ -72,10 +73,11 @@ def home():
     # notifications = get_notifications(inact_loung_num,inactive_clients,crowdedness)
     
     setting = {'time_alert':np.arange(2,7), 'plot_interval':np.arange(2,7)}
-
     # stat_list = [act_loung_num, inact_loung_num,vol_curr, vol_prev, len(active_clients), len(inactive_clients),inactive_lounges, crowdedness]
     return render_template('index.html', data= data, clients= access_clients, cl_lounges_= cl_lounges_, 
-                           airports = airport_uq_list, cities = city_uq_list, countries = country_uq_list, setting=setting, user=users[username]["ClientID"])
+                           airports = airport_uq_list, cities = city_uq_list, countries = country_uq_list, 
+                           setting=setting, logo_path = logo_render(users[username]["ClientID"], only_filename=True ),
+                           background_logo = logo_render(users[username]["ClientID"]+'_2', only_filename=True ))
 
 @app.route('/update_plot', methods=['POST'])
 def update_plot():
@@ -371,7 +373,8 @@ def dormant():
 
     stat_list = [inactive_clients,inactive_lounges]
     
-    return render_template('dormant.html', clients= access_clients, stats= stat_list , user=username)
+    return render_template('dormant.html', clients= access_clients, stats= stat_list,
+                            logo_path = logo_render(users[username]["ClientID"], only_filename=True ))
 
 
 
@@ -405,7 +408,7 @@ def dashboard_lounge(client):
      
     return render_template('lounge_monitor.html', client= client,cl_lounges_= cl_lounges_, 
                            airports = airport_uq_list, cities = city_uq_list, countries = country_uq_list,
-                            setting=setting, logo_file_name=file_name, user=username)  
+                            setting=setting, logo_file_name=file_name, logo_path = logo_render(users[username]["ClientID"], only_filename=True ))  
 
 
 
@@ -437,7 +440,8 @@ def dashboard_airport(client):
      
     return render_template('airport_monitor.html', client= client, 
                            airports = list(airport_uq_list),  
-                           logo_file_name=file_name, airport_locs=airport_locs, user=username)  
+                           logo_file_name=file_name, airport_locs=airport_locs,
+                            logo_path = logo_render(users[username]["ClientID"], only_filename=True ))  
 
 @app.route('/update_airports', methods=['POST'])
 def update_airports():
@@ -494,7 +498,8 @@ def dashboard(client):
     stat_list = [inact_lg_list, crowdedness]
     return render_template('dashboard.html', client= client,cl_lounges_= cl_lounges_, 
                            airports = airport_uq_dict, cities = city_uq_list, countries = country_uq_list,
-                             stats=stat_list, setting=setting, logo_file_name=file_name, cities_dict=cities_dict, user=username)
+                             stats=stat_list, setting=setting, logo_file_name=file_name, cities_dict=cities_dict,
+                             logo_path = logo_render(users[username]["ClientID"], only_filename=True ))
 
 
 
@@ -622,7 +627,7 @@ def map():
     username = session["username"]
     access_clients = users[username]["AccessCL"]
 
-    return render_template('map.html', user=username)
+    return render_template('map.html', logo_path = logo_render(users[username]["ClientID"], only_filename=True ))
 
 
 @app.route('/update_map', methods=['POST'])
