@@ -611,8 +611,6 @@ def map():
         return redirect('/login')
     
     username = session["username"]
-    access_clients = users[username]["AccessCL"]
-
     return render_template('map.html', logo_path = logo_render(users[username]["ClientID"], only_filename=True ))
 
 @app.route('/update_map', methods=['POST'])
@@ -642,6 +640,14 @@ def update_map():
 def logout():
     session.pop('username', None)
     return redirect('/login')
+
+@app.route('/user_guide', methods=['GET'])
+def user_guide():
+
+    if 'username' not in session:
+        return redirect('/login')
+    username = session["username"]
+    return render_template('user_guide.html', logo_path = logo_render(users[username]["ClientID"], only_filename=True ))
 
 @app.route('/<path:path>')
 def redirect_to_home(path):
