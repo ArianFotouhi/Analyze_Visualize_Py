@@ -16,16 +16,25 @@ def update_plot_interval(new_value):
     global plot_interval
     plot_interval = new_value
     
-def logo_render(client):
-    logo_path = 'static/image/'  # Path to your logo image
+def logo_render(client, only_full_address=False, only_filename=False):
+    logo_path = 'static/image/logos/'  # Path to your logo image
     secure_name = convert_to_secure_name(client)
 
     logo_file = f'{secure_name}.png'
+    if only_filename:
+        return logo_file
+    
     logo_full_path = os.path.join(logo_path, logo_file)
-
+    
     if os.path.exists(logo_full_path):
-        logo = Image.open(logo_full_path)
-        return logo
+
+        if only_full_address:
+            return logo_full_path
+            
+        else:
+            logo = Image.open(logo_full_path)
+            return logo
+
     else:
         return None
 
