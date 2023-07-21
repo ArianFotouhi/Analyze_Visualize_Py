@@ -19,8 +19,10 @@ plot_gradient_intensity = 0.5
 num_samples_gradient = 200
 
 users = {
-    "IEG": {"password": "admin", "ClientID": 'IEG', 'AccessCL':['STR', 'AC','AV','EK1','LH','LX','UA1']},
-    "AC": {"password": "pass1", "ClientID": 'AC', 'AccessCL':['AC']},
+    "IEG": {"password": "pass", "ClientID": 'IEG', 'AccessCL':['STR', 'AC','AV','EK1','LH','LX','UA1']},
+    "STR": {"password": "pass", "ClientID": 'STR', 'AccessCL':['STR', 'AC','AV','EK1','LH']},
+    "AC": {"password": "pass", "ClientID": 'AC', 'AccessCL':['AC']},
+    "LH": {"password": "pass", "ClientID": 'LH', 'AccessCL':['LH','LX']},
 }
 
 # Date_col ='DATE_UTC'
