@@ -1,5 +1,5 @@
-from flask import Flask, render_template, request, redirect, session, jsonify, url_for
-from utils import load_data, filter_data_by_cl, dropdown_menu_filter, LoungeCounter, stream_on_off, active_inactive_lounges, active_clients_percent, volume_rate, filter_unique_val, lounge_crowdedness, get_notifications, ParameterCounter, crowdedness_alert, range_filter, order_clients, update_time_alert, update_plot_interval, column_sum, plot_interval_handler, airport_loc, fetch_wikipedia_summary, logo_render
+from flask import Flask, render_template, request, redirect, session, jsonify, url_for, send_from_directory
+from utils import load_data, filter_data_by_cl, dropdown_menu_filter, LoungeCounter, stream_on_off, active_inactive_lounges, active_clients_percent, volume_rate, filter_unique_val, lounge_crowdedness, get_notifications, ParameterCounter, crowdedness_alert, range_filter, plot_arranger, update_time_alert, update_plot_interval, column_sum, plot_interval_handler, airport_loc, fetch_wikipedia_summary, logo_render
 from config import Date_col, Lounge_ID_Col, CLName_Col, Volume_ID_Col,  users, Airport_Name_Col, City_Name_Col, Country_Name_Col
 from authentication import Authentication
 import numpy as np
@@ -62,10 +62,10 @@ def home():
     # active_clients, inactive_clients = active_clients_percent(access_clients, active_lounges, inactive_lounges)
     # _, vol_curr, vol_prev = volume_rate(access_clients, amount=7)
 
-    cl_lounges_ = filter_unique_val(df, 'lounges')
-    airport_uq_list = filter_unique_val(df, 'airport')
-    city_uq_list = filter_unique_val(df, 'city')
-    country_uq_list = filter_unique_val(df, 'country')
+    cl_lounges_ = filter_unique_val(accessed_df, 'lounges')
+    airport_uq_list = filter_unique_val(accessed_df, 'airport')
+    city_uq_list = filter_unique_val(accessed_df, 'city')
+    country_uq_list = filter_unique_val(accessed_df, 'country')
 
     # notifications = get_notifications(inact_loung_num,inactive_clients,crowdedness)
     
@@ -274,7 +274,7 @@ def update_plot():
 
 
         #0.08 seconds
-        clients = order_clients(df,access_clients,selected_client_order, optional=['day',time_alert],plot_interval=plot_interval, cl_data=cl_data)
+        clients = plot_arranger(df,access_clients,selected_client_order, optional=['day',time_alert],plot_interval=plot_interval, extra_data=cl_data)
         image_list=[]
         
         temp_cl_list = clients[:]
@@ -354,7 +354,8 @@ def intelligence_hub():
     crowdedness = lounge_crowdedness(date='latest',alert = crowdedness_alert, access_clients=access_clients)
     stat_list = [inactive_clients, inactive_lounges, crowdedness]
     
-    return render_template('intelligence_hub.html', clients= access_clients, stats= stat_list, user=username)
+    return render_template('intelligence_hub.html', clients= access_clients, 
+                           stats= stat_list, user=username, logo_path = logo_render(users[username]["ClientID"], only_filename=True ))
 
 @app.route('/dormant', methods=['GET'])
 def dormant():
@@ -433,7 +434,7 @@ def dashboard_airport(client):
     return render_template('airport_monitor.html', client= client, 
                            airports = list(airport_uq_list),  
                            logo_file_name=file_name, airport_locs=airport_locs,
-                            logo_path = logo_render(users[username]["ClientID"], only_filename=True ))  
+                            logo_path = logo_render(client, only_filename=True ))  
 
 @app.route('/update_airports', methods=['POST'])
 def update_airports():
@@ -487,7 +488,7 @@ def dashboard(client):
     stat_list = [inact_lg_list, crowdedness]
     return render_template('dashboard.html', client= client,cl_lounges_= cl_lounges_, 
                            airports = airport_uq_dict, cities = city_uq_list, countries = country_uq_list,
-                             stats=stat_list, setting=setting, logo_file_name=file_name, cities_dict=cities_dict,
+                             stats=stat_list, setting=setting, logo_file_name = file_name, cities_dict=cities_dict,
                              logo_path = logo_render(users[username]["ClientID"], only_filename=True ))
 
 @app.route('/update_dashboard', methods=['POST'])
@@ -504,6 +505,7 @@ def update_dashboard():
     selected_airport = request.form['airport_name']
     selected_city = request.form['city_name']
     selected_country = request.form['country_name']
+    selected_client_order = request.form['client_order']
 
     time_alert = int(request.form['time_alert']) 
     plot_interval = int(request.form['plt_interval'])
@@ -545,7 +547,7 @@ def update_dashboard():
 
 
     if selected_start_date != '' or selected_end_date!= '':
-        df = range_filter(df, pd.to_datetime(selected_start_date),pd.to_datetime(selected_end_date),Date_col)
+        df = range_filter(df, pd.to_datetime(selected_start_date), pd.to_datetime(selected_end_date),Date_col)
 
 
 
@@ -558,38 +560,60 @@ def update_dashboard():
 
     #scales: sec, min, hour, day, mo, year
     no_data_dict = stream_on_off(scale='day', length=time_alert, level='lg', component_list = lg_list)
-
     #alphabet
     #pax_rate
     # clients = order_clients(df,access_clients,selected_client_order, optional=['day',time_alert],plot_interval=plot_interval)
     image_list=[]
     
     df = filter_data_by_cl(session["username"], df, client, access_clients)
+    lg_data = [lg_list, no_data_dict]
 
-   
+
+    lg_info = {}       
+    for lg in lg_list:
+        
+        filtered_df = dropdown_menu_filter(df,Lounge_ID_Col ,lg)
+
+        date_list, vol_sum_list = plot_interval_handler(filtered_df, plot_interval*1440)
+        if vol_sum_list:
+            if len(vol_sum_list)>1:
+                if vol_sum_list[-2] != 0:
+                    lg_growth_rate = 100*(vol_sum_list[-1] - vol_sum_list[-2]) / (vol_sum_list[-2])
+                else:
+                    lg_growth_rate = 100
+            else:
+                lg_growth_rate = 100
+            
+            data_available = True
+            lg_info[lg] = [date_list, vol_sum_list, lg_growth_rate, data_available]
+        
+        else:
+            data_available = False
+            lg_info[lg] = [None, None, None, data_available]
+
+
+
+
+        
+    lg_list = plot_arranger(df,data_package=lg_data, order = selected_client_order, 
+                            level='lg', optional=['day',time_alert], 
+                            plot_interval=plot_interval, extra_data=lg_info)
+
 
 
     for lounge in lg_list:
-
-        lounge_df = dropdown_menu_filter(df,Lounge_ID_Col ,lounge)
-        date_list, vol_sum_list = plot_interval_handler(lounge_df, plot_interval*1440)
-        
-        if vol_sum_list[-2] != 0:
-            lg_growth_rate = 100*(vol_sum_list[-1] - vol_sum_list[-2]) / (vol_sum_list[-2])
-        else:
-            lg_growth_rate = 100
-
-    
-
-       
+        date_list = lg_info[lounge][0]
+        vol_sum_list = lg_info[lounge][1]
+        lg_growth_rate = lg_info[lounge][2]    
         
         if str(lounge) in list(no_data_dict.keys()):
             no_data_error = f"Last update {no_data_dict[str(lounge)]}"
         else:
             no_data_error = None
         
-        if not vol_sum_list:
+        if not lg_info[lounge][3]:
             continue
+
 
         plt_title = f'Lounge {lounge}'
         pltr = Plotter(date_list, vol_sum_list, plt_title , plt_thickness= plt_thickness ,xlabel='',  ylabel='Passengers', no_data_error= no_data_error, 
@@ -648,6 +672,11 @@ def user_guide():
         return redirect('/login')
     username = session["username"]
     return render_template('user_guide.html', logo_path = logo_render(users[username]["ClientID"], only_filename=True ))
+
+@app.route('/user_guide/<path:filename>')
+def user_guide_page(filename):
+    return render_template(f'user_guide/{filename}.html')
+
 
 @app.route('/<path:path>')
 def redirect_to_home(path):
