@@ -34,7 +34,8 @@ def login():
             session["username"] = username
             return redirect('/home')
         else:
-            return render_template("login.html", error="Invalid username or password")
+            return render_template("login.html", logo_path = logo_render('Login_page', only_filename=True ),
+                                    error="Invalid username or password")
     return render_template("login.html", 
                            logo_path = logo_render('Login_page', only_filename=True ))
 
