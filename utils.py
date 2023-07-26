@@ -548,45 +548,93 @@ def plot_interval_handler(df, n):
     return date_list, volume_list
 
 
-def order_clients(df,clients, order, optional, cl_data, plot_interval=1):
-    if order =='alphabet':
-        clients.sort()
-        
-    elif order =='pax_rate':
-        
-        username = session["username"]
-        access_clients = users[username]["AccessCL"]
+def plot_arranger(df, data_package, order, optional, extra_data=None, level='cl',plot_interval=1):
+    if level == 'cl':    
+        if order =='alphabet':
+            clients = data_package 
+            clients.sort()
+            return clients
+            
+        elif order =='pax_rate':
+            clients = data_package 
 
-        cl_dict = {}
-        for client in clients:
-            client_df = filter_data_by_cl(session["username"], df, client, access_clients)
-            _, vol_sum_list = plot_interval_handler(client_df, plot_interval*1440)
-            cl_dict[client] = sum(vol_sum_list)
-        clients = sorted(cl_dict,key=cl_dict.get,reverse=True)
+            username = session["username"]
+            access_clients = users[username]["AccessCL"]
+
+            cl_dict = {}
+            for client in clients:
+                client_df = filter_data_by_cl(session["username"], df, client, access_clients)
+                _, vol_sum_list = plot_interval_handler(client_df, plot_interval*1440)
+                cl_dict[client] = sum(vol_sum_list)
+            clients = sorted(cl_dict,key=cl_dict.get,reverse=True)
+            return clients
+        
+        elif order =='alert':
+            clients = data_package 
+
+            username = session["username"]
+            access_clients = users[username]["AccessCL"]
+            
+
+            #order based on the max of current_rec[px] - last_rec[px]
+            #then do below to oreder (if applicable)
+            clients_dict = {}
+            for client in clients:
+                clients_dict[client] = extra_data[client][2]            
+
+            
+            clients = sorted(clients_dict, key=lambda k: abs(clients_dict[k]), reverse=True)
+
+
+            no_date = stream_on_off(scale=optional[0],length=optional[1])
+            for client in clients:
+                if client in no_date :
+                    clients.remove(client)
+                    clients.insert(0,client)
+            return clients
+
+
+
+    if level == 'lg':
+        if order =='alphabet':
+            lgs, no_date = data_package 
+            lgs.sort()
+            return lgs
+            
+        elif order =='pax_rate':
+            lgs, no_date = data_package 
+
+
+
+            lg_dict = {}
+            for lg in lgs:
+                filtered_df = dropdown_menu_filter(df,Lounge_ID_Col ,lg)
+                _, vol_sum_list = plot_interval_handler(filtered_df, plot_interval*1440)
+                lg_dict[lg] = sum(vol_sum_list)
+            lgs = sorted(lg_dict, key=lg_dict.get, reverse=True)
+            return lgs
+        
+        elif order == 'alert':
+            lg_list, no_date = data_package
+
+            clients_dict = {}
+            for lg in lg_list:
+                clients_dict[lg] = extra_data[lg][2]            
+
+            
+            lg_list = sorted(clients_dict, key=lambda k: abs(clients_dict[k]), reverse=True)
+
+            for lg in lg_list:
+                if lg in no_date :
+                    lg_list.remove(lg)
+                    lg_list.insert(0,lg)
+            return lg_list
+
+
+            
+
+
     
-    elif order =='alert':
-        username = session["username"]
-        access_clients = users[username]["AccessCL"]
-        
-
-        #order based on the max of current_rec[px] - last_rec[px]
-        #then do below to oreder (if applicable)
-        clients_dict = {}
-        for client in clients:
-            clients_dict[client] = cl_data[client][2]            
-
-        
-        clients = sorted(clients_dict, key=lambda k: abs(clients_dict[k]), reverse=True)
-
-
-        no_date = stream_on_off(scale=optional[0],length=optional[1])
-        for client in clients:
-            if client in no_date :
-                clients.remove(client)
-                clients.insert(0,client)
-
-
-    return clients
 
 def airport_loc(client, airport_list):
     df = load_data()
