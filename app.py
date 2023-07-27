@@ -52,6 +52,10 @@ def home():
 
     username = session["username"]
     access_clients = users[username]["AccessCL"]
+    if len(access_clients)<2:
+        single_client = True
+    else:
+        single_client = False
 
     accessed_df = filter_data_by_cl(session["username"], df, '', access_clients)
 
@@ -75,7 +79,7 @@ def home():
     return render_template('index.html', data= data, clients= access_clients, cl_lounges_= cl_lounges_, 
                            airports = airport_uq_list, cities = city_uq_list, countries = country_uq_list, 
                            setting=setting, logo_path = logo_render(users[username]["ClientID"], only_filename=True ),
-                           background_logo = logo_render(users[username]["ClientID"]+'_2', only_filename=True ))
+                           background_logo = logo_render(users[username]["ClientID"]+'_2', only_filename=True ),single_client=single_client)
 
 @app.route('/update_plot', methods=['POST'])
 def update_plot():
@@ -85,7 +89,11 @@ def update_plot():
     df = load_data()
 
 
-    selected_client = request.form['client']
+    try:
+        selected_client = request.form['client']
+    except:
+        selected_client = ''
+        
     selected_lounge = request.form['lounge_name']
     selected_airport = request.form['airport_name']
     selected_city = request.form['city_name']
@@ -96,7 +104,12 @@ def update_plot():
     
     plot_gradient_intensity = float(request.form['plot_gradient_intensity'])
     plt_thickness = float(request.form['plt_thickness'])
-    selected_client_order = request.form['client_order']
+    
+    try:
+        selected_client_order = request.form['client_order']
+    except:
+        selected_client_order = ''
+        
 
     selected_start_date = request.form['start_date']
     selected_end_date = request.form['end_date']
