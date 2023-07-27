@@ -592,6 +592,8 @@ def plot_arranger(df, data_package, order, optional, extra_data=None, level='cl'
                     clients.remove(client)
                     clients.insert(0,client)
             return clients
+        elif order == "":
+            return data_package
 
 
 
