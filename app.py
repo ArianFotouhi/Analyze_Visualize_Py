@@ -381,8 +381,12 @@ def dormant():
     access_clients = users[username]["AccessCL"]
     active_lounges, inactive_lounges, act_loung_num, inact_loung_num = active_inactive_lounges(access_clients)
     active_clients, inactive_clients = active_clients_percent(access_clients, active_lounges, inactive_lounges)
+    inactive_cl_list = []
 
-    stat_list = [inactive_clients,inactive_lounges]
+    for i in inactive_clients:
+        inactive_cl_list.append([i ,logo_render(i, only_filename=True )])
+        
+    stat_list = [inactive_cl_list,inactive_lounges]
     
     return render_template('dormant.html', clients= access_clients, stats= stat_list,
                             logo_path = logo_render(users[username]["ClientID"], only_filename=True ))
