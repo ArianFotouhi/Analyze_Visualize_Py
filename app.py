@@ -2,6 +2,7 @@ from flask import Flask, render_template, request, redirect, session, jsonify, u
 from utils import load_data, filter_data_by_cl, dropdown_menu_filter, LoungeCounter, stream_on_off, active_inactive_lounges, active_clients_percent, volume_rate, filter_unique_val, lounge_crowdedness, get_notifications, ParameterCounter, crowdedness_alert, range_filter, plot_arranger, update_time_alert, update_plot_interval, column_sum, plot_interval_handler, airport_loc, fetch_wikipedia_summary, logo_render
 from config import Date_col, Lounge_ID_Col, CLName_Col, Volume_ID_Col,  users, Airport_Name_Col, City_Name_Col, Country_Name_Col
 from authentication import Authentication
+from database import load_data_2
 import numpy as np
 import pandas as pd
 from plotter import Plotter
@@ -86,7 +87,6 @@ def update_plot():
 
     username = session["username"]
     access_clients = users[username]["AccessCL"]
-    df = load_data()
 
 
     try:
@@ -117,6 +117,14 @@ def update_plot():
     # print('selected_date', selected_start_date)
     update_time_alert(time_alert)
     update_plot_interval(plot_interval)
+   
+    df = load_data()
+    
+    # df2 = load_data_2(
+    #                 from_time= selected_start_date,
+    #                 to_time= selected_end_date
+    #                   )
+    # print('df2',df2)
 
     if selected_start_date != '' or selected_end_date!= '':
         df = range_filter(df, pd.to_datetime(selected_start_date),pd.to_datetime(selected_end_date),Date_col)
@@ -549,6 +557,11 @@ def update_dashboard():
     update_time_alert(time_alert)
     update_plot_interval(plot_interval)
 
+    # df2 = load_data_2(
+    #                 from_time= selected_start_date,
+    #                 to_time= selected_end_date
+    #                   )
+    # print('df2',df2)
     if selected_start_date != '' or selected_end_date!= '':
         df = range_filter(df, pd.to_datetime(selected_start_date),pd.to_datetime(selected_end_date),Date_col)
     
@@ -663,7 +676,11 @@ def update_map():
     df = load_data()
     
     selected_start_date = request.form['start_date']
-    # print('in map js',selected_start_date)
+    
+    # df2 = load_data_2(
+    #                 from_time = selected_start_date
+    #                   )
+    # print('df2',df2)
     if selected_start_date != '':
         df = range_filter(df, pd.to_datetime(selected_start_date),None,Date_col)
 
