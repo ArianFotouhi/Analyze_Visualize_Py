@@ -11,7 +11,7 @@ Ratio_Col='REF2ALW'
 
 
 #update them in index.html too
-time_alert = 20
+time_alert = 30
 crowdedness_alert = 18
 plot_interval = 1
 
