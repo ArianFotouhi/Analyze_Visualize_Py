@@ -19,7 +19,6 @@ authenticate = Authentication().authenticate
 app = Flask(__name__)
 app.secret_key = "!241$gc"
 
-
 @app.route('/', methods=['GET'])
 def index():
     if 'username' in session:
@@ -50,6 +49,7 @@ def home():
         return redirect(url_for('dashboard', client=client_name))
     
     df = load_data()
+    # df = load_data_2()
 
     username = session["username"]
     access_clients = users[username]["AccessCL"]
@@ -411,6 +411,8 @@ def dashboard_lounge(client):
         return redirect('/home')
     
     df = load_data()
+    # df = load_data_2()
+    
     filtered_df = dropdown_menu_filter(df,CLName_Col ,client)
 
     cl_lounges_ = filter_unique_val(filtered_df, 'lounges')
@@ -443,6 +445,7 @@ def dashboard_airport(client):
         return redirect('/home')
     
     df = load_data()
+    # df = load_data_2()
     filtered_df = dropdown_menu_filter(df,CLName_Col ,client)
 
     airport_uq_list = filter_unique_val(filtered_df,'airport') #return an array
@@ -485,6 +488,7 @@ def dashboard(client):
         return redirect('/home')
     
     df = load_data()
+    # df = load_data_2()
     filtered_df = dropdown_menu_filter(df,CLName_Col ,client)
 
     cl_lounges_ = filter_unique_val(filtered_df, 'lounges')
@@ -523,6 +527,7 @@ def update_dashboard():
     username = session["username"]
     access_clients = users[username]["AccessCL"]
     df = load_data()
+    # df = load_data_2()
     
     client = request.form['client']
     page_user = request.form['page_user']
