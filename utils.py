@@ -4,7 +4,8 @@ from PIL import Image
 import os
 from datetime import datetime, timedelta
 import pytz
-from config import Date_col, Lounge_ID_Col, CLName_Col, Volume_ID_Col, Refuse_Col, Ratio_Col, users, time_alert, crowdedness_alert, Airport_Name_Col, City_Name_Col, Country_Name_Col, plot_interval, plot_gradient_intensity
+from database import load_data_2
+from config import Date_col, Lounge_ID_Col, CL_ID_Col, CL_Name_Col, Volume_ID_Col, Refuse_Col, Ratio_Col, users, time_alert, crowdedness_alert, Airport_Name_Col, City_Name_Col, Country_Name_Col, plot_interval, plot_gradient_intensity
 from conversion import convert_to_secure_name
 import requests
 from execution_meter import measure_latency
@@ -40,12 +41,23 @@ def logo_render(client, only_full_address=False, only_filename=False):
 
 
 
-def load_data():
-    df = pd.read_csv('data/fake_data.txt')
-    # df = pd.read_csv("data/real_data.txt")
-    df[Date_col] = pd.to_datetime(df[Date_col])
+# def load_data():
+#     df = pd.read_csv('data/fake_data.txt')
+#     # df = pd.read_csv("data/real_data.txt")
+#     df[Date_col] = pd.to_datetime(df[Date_col])
     
-    return df
+#     return df
+def id2name(id=None, name=None, id2name=True, level='cl'):
+    if level == 'cl':
+        if id2name:
+            df = load_data_2()
+             
+            result = df.loc[df[CL_ID_Col] == id, CL_Name_Col]
+            if len(result)>0:
+                result = result.values[0]
+                return result
+        
+
 
 def range_filter(df, from_, to_, column_name):
     if pd.notna(from_) and pd.notna(to_):
@@ -60,17 +72,18 @@ def range_filter(df, from_, to_, column_name):
 
 def filter_data_by_cl(username, df, selected_client, access_clients):
     
+
     if selected_client:
 
         if isinstance(selected_client, list):
             if selected_client == access_clients or set(selected_client).issubset(access_clients):
-                filtered_df = df[df[CLName_Col].isin(selected_client)]
+                filtered_df = df[df[CL_ID_Col].isin(selected_client)]
             else:
                 filtered_df = None
         else:
-            
             if selected_client in access_clients:
-                filtered_df = df[df[CLName_Col] == str(selected_client)]
+                filtered_df = df[df[CL_ID_Col] == selected_client]
+                # filtered_df = df[df[CLName_Col] == str(selected_client)]
             else:
                 filtered_df = None
 
@@ -78,34 +91,42 @@ def filter_data_by_cl(username, df, selected_client, access_clients):
         return df
     else:
         # filtered_df = df[df[CLName_Col] == users[username]['AccessCL']]
-        filtered_df = df[df[CLName_Col].isin(list(users[username]['AccessCL']))]
+        filtered_df = df[df[CL_ID_Col].isin(list(users[username]['AccessCL']))]
 
     return filtered_df
 
 
-def dropdown_menu_filter(df, col_name,selected_val):    
-    filtered_df = df[df[col_name] == selected_val]
+def dropdown_menu_filter(df, col_name,selected_val):
 
+    filtered_df = df[df[col_name] == str(selected_val)]
+
+    if filtered_df.empty:
+        try:
+            filtered_df = df[df[col_name] == int(selected_val)]
+        except:
+            pass
 
     return filtered_df
 
 
 
 def LoungeCounter(name, modality='cl'):
-    df = load_data()
+    # df = load_data()
+    df = load_data_2()
     if modality == 'cl':
-        unique_count = df.loc[df[CLName_Col] == name, Lounge_ID_Col].nunique()
+        unique_count = df.loc[df[CL_ID_Col] == name, Lounge_ID_Col].nunique()
         return unique_count
     elif modality == 'lg':
-        cl = df.loc[df[Lounge_ID_Col] == name][CLName_Col][-1:].values[0]
+        cl = df.loc[df[Lounge_ID_Col] == name][CL_ID_Col][-1:].values[0]
         unique_count = LoungeCounter(name=cl)
         return unique_count, cl
     
 def ParameterCounter(name, base, to_be_counted, df=None):
-    if df is not None and not df.empty:
+    if df is not None:
         pass
     else:
-        df = load_data()
+        # df = load_data()
+        df = load_data_2()
     if name:
         unique_vals = df.loc[df[base] == name, to_be_counted].unique()
         unique_count = len(unique_vals)
@@ -120,22 +141,25 @@ def ParameterCounter(name, base, to_be_counted, df=None):
 
 
 def stream_on_off(scale='sec', length=10, level='cl',component_list =[]):
-    
-    
+
+
     if level == 'cl':
         username = session["username"]
         component_list = users[username]["AccessCL"]
         no_data = {}
-        df = load_data()
+        # df = load_data()
+        df = load_data_2()
         
         for i in component_list:
-
             # Filter the DataFrame for the last record with id=X
-            last_record = df[df[CLName_Col] == i].tail(1)
+            last_record = df[df[CL_ID_Col] == i].tail(1)
             # Get the timestamp of the last record
-            last_time = last_record[Date_col].iat[0]
+            if last_record.empty:
+                no_data[i] = 'No available record'
+                continue
 
-        
+
+            last_time = last_record[Date_col].iat[0]
 
             # Calculate the time difference based on the specified scale and length
             if scale == 'sec':
@@ -173,7 +197,8 @@ def stream_on_off(scale='sec', length=10, level='cl',component_list =[]):
     elif level == 'lg':
         
         no_data = {}
-        df = load_data()
+        # df = load_data()
+        df = load_data_2()
 
         for i in component_list:
 
@@ -222,7 +247,7 @@ def get_latest_lounge_status(df):
     current_date = datetime.now(pytz.UTC)
     latest_record = None
      
-    for _, group_df in df.groupby([CLName_Col, Lounge_ID_Col]):
+    for _, group_df in df.groupby([CL_ID_Col, Lounge_ID_Col]):
         group_df[Date_col] = pd.to_datetime(group_df[Date_col], format='%Y-%m-%d')
         # group_df[Date_col] = pd.to_datetime(group_df[Date_col], format='%Y-%m-%d %H:%M:%S')
 
@@ -296,7 +321,8 @@ def active_inactive_lounges(clients):
     # date_format= '%Y-%m-%d %H:%M:%S'
     date_format= '%Y-%m-%d'
     convert_option=None
-    df = load_data()
+    # df = load_data()
+    df = load_data_2()
     active_lounges = {}
     inactive_lounges = {}
     act_loung_num = 0
@@ -304,7 +330,6 @@ def active_inactive_lounges(clients):
 
     for client_id in clients:
         client_df = filter_data_by_cl(session["username"], df, client_id, clients)
-
         active_lounge_ids = set()
         inactive_lounge_ids = set()
         
@@ -363,7 +388,8 @@ def active_clients_percent(clients,actdict, inactdict):
 
 def volume_rate(clients, amount=5):
     rates = {}
-    df = load_data()
+    # df = load_data()
+    df = load_data_2()
    
    
     volume_sum_x = 0
@@ -371,9 +397,12 @@ def volume_rate(clients, amount=5):
     current_vol = 0
     prev_vol = 0
     for client_id in clients:
-        client_df = df[df[CLName_Col] == client_id]  # Filter the DataFrame for a particular client
+        client_df = df[df[CL_ID_Col] == client_id]  # Filter the DataFrame for a particular client
         
-       
+        if client_df.empty:
+            rates[client_id] = [0, 0]
+            continue
+
         latest_record = client_df.iloc[-1]  # Get the latest record for the client
         
         last_date = latest_record[Date_col]
@@ -459,7 +488,8 @@ def filter_unique_val(df, column):
 def lounge_crowdedness(access_clients, date='latest', selected_client='', alert=crowdedness_alert):
 
 
-    df = load_data()
+    # df = load_data()
+    df = load_data_2()
 
     df  = filter_data_by_cl(session["username"], df, selected_client, access_clients)
 
@@ -475,10 +505,11 @@ def lounge_crowdedness(access_clients, date='latest', selected_client='', alert=
     for i,dataframe in enumerate([very_crowded_df, crowded_df, normal_df, uncrowded_df,open_to_accept_df]):
         selected_key = key_list[i]
     
-        clients = dataframe[CLName_Col].unique()
+        clients = dataframe[CL_ID_Col].unique()
         for j in clients:
 
             if date =='latest':
+                
                 client_df = filter_data_by_cl(session["username"], dataframe, j, access_clients)
                 latest_date = get_latest_date_time(client_df)
 
@@ -520,8 +551,7 @@ def get_notifications(inact_loung_num,inactive_clients,crowdedness):
 def get_latest_date_time(df):
 
     latest_rec = get_latest_lounge_status(df)
-        
-    latest_date= pd.to_datetime(latest_rec[Date_col])
+    latest_date = pd.to_datetime(latest_rec[Date_col])
 
     return latest_date
 
@@ -639,9 +669,11 @@ def plot_arranger(df, data_package, order, optional, extra_data=None, level='cl'
     
 
 def airport_loc(client, airport_list):
-    df = load_data()
-    df = dropdown_menu_filter(df, CLName_Col,client)    
+    # df = load_data()
+    df = load_data_2()
+    df = dropdown_menu_filter(df, CL_ID_Col, client)    
     
+
     airport_ls = []
     for airport in airport_list:
         new_df = dropdown_menu_filter(df, Airport_Name_Col,airport) 
