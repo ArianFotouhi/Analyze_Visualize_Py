@@ -9,6 +9,8 @@ from config import Date_col, Lounge_ID_Col, CL_ID_Col, CL_Name_Col, Volume_ID_Co
 from conversion import convert_to_secure_name
 import requests
 from execution_meter import measure_latency
+import pycountry
+
 
 def update_time_alert(new_value):
     global time_alert
@@ -687,6 +689,15 @@ def airport_loc(client, airport_list):
                             ])
     
     return airport_ls
+
+
+def country_code_name(code):
+    try:
+        country = pycountry.countries.get(alpha_2=code)
+        return country.name
+    except AttributeError:
+        return "Unknown Country"
+
 
 def fetch_wikipedia_summary(search_query):
     search_url = "https://en.wikipedia.org/w/api.php"
