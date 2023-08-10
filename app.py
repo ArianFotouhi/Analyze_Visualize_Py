@@ -1,5 +1,5 @@
 from flask import Flask, render_template, request, redirect, session, jsonify, url_for
-from utils import filter_data_by_cl, dropdown_menu_filter, LoungeCounter, stream_on_off, active_inactive_lounges, active_clients_percent, volume_rate, filter_unique_val, lounge_crowdedness, get_notifications, ParameterCounter, crowdedness_alert, range_filter, plot_arranger, update_time_alert, update_plot_interval, column_sum, plot_interval_handler, airport_loc, fetch_wikipedia_summary, logo_render, id2name
+from utils import filter_data_by_cl, dropdown_menu_filter, LoungeCounter, stream_on_off, active_inactive_lounges, active_clients_percent, volume_rate, filter_unique_val, lounge_crowdedness, get_notifications, ParameterCounter, crowdedness_alert, range_filter, plot_arranger, update_time_alert, update_plot_interval, column_sum, plot_interval_handler, airport_loc, fetch_wikipedia_summary, logo_render, id2name, country_code_name
 from config import Date_col, Lounge_ID_Col, CL_ID_Col, Volume_ID_Col,  users, Airport_Name_Col, City_Name_Col, Country_Name_Col
 from authentication import Authentication
 from database import load_data_2
@@ -720,7 +720,7 @@ def update_map():
     #                   )
     # print('df2',df2)
     if selected_start_date != '':
-        df = range_filter(df, pd.to_datetime(selected_start_date),None,Date_col)
+        df = range_filter(df, pd.to_datetime(selected_start_date), None, Date_col)
 
 
     username = session["username"]
@@ -730,6 +730,11 @@ def update_map():
 
     #number of passengers not the received data records
     country_rates = column_sum(df, Country_Name_Col, Volume_ID_Col)
+    for i in country_rates:
+        
+        key = i['name']        
+        new_key = country_code_name(key)
+        i['name'] = new_key
 
     return jsonify({'country_uq_dict': country_rates})
 
