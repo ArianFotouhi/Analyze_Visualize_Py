@@ -1,6 +1,6 @@
 from flask import Flask, render_template, request, redirect, session, jsonify, url_for
 from utils import filter_data_by_cl, dropdown_menu_filter, LoungeCounter, stream_on_off, active_inactive_lounges, active_clients_percent, volume_rate, filter_unique_val, lounge_crowdedness, get_notifications, ParameterCounter, crowdedness_alert, range_filter, plot_arranger, update_time_alert, update_plot_interval, column_sum, plot_interval_handler, airport_loc, fetch_wikipedia_summary, logo_render, id2name, country_code_name
-from config import Date_col, Lounge_ID_Col, CL_ID_Col, Volume_ID_Col,  users, Airport_Name_Col, City_Name_Col, Country_Name_Col
+from config import Date_col, Lounge_ID_Col, CL_ID_Col, Volume_ID_Col,  users, Airport_Name_Col, City_Name_Col, Country_Name_Col, secret_key
 from authentication import Authentication
 from database import load_data_2
 import numpy as np
@@ -17,7 +17,7 @@ authenticate = Authentication().authenticate
 
 
 app = Flask(__name__)
-app.secret_key = "!241$gc"
+app.secret_key =  secret_key
 
 @app.route('/', methods=['GET'])
 def index():
@@ -756,9 +756,9 @@ def user_guide_page(filename):
     return render_template(f'user_guide/{filename}.html')
 
 
-# @app.route('/<path:path>')
-# def redirect_to_home(path):
-    # return redirect(url_for('home'))
+@app.route('/<path:path>')
+def redirect_to_home(path):
+    return redirect(url_for('home'))
 
 
 if __name__ == '__main__':
