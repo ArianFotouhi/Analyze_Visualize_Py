@@ -286,8 +286,6 @@ def update_plot():
             cl_data = ''
 
 
-        print('my df is: ', df)
-        print('access_clients', access_clients, type(access_clients),'selected_client_order:', selected_client_order)
         #0.08 seconds
         clients = plot_arranger(df, access_clients, selected_client_order, optional = ['day',time_alert], plot_interval = plot_interval, extra_data = cl_data)
         image_list=[]
