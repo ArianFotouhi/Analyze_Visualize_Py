@@ -1,8 +1,7 @@
-from flask import Flask, render_template, request, redirect, session, jsonify, url_for
-from utils import filter_data_by_cl, dropdown_menu_filter, LoungeCounter, stream_on_off, active_inactive_lounges, active_clients_percent, volume_rate, filter_unique_val, lounge_crowdedness, get_notifications, ParameterCounter, crowdedness_alert, range_filter, plot_arranger, update_time_alert, update_plot_interval, column_sum, plot_interval_handler, airport_loc, fetch_wikipedia_summary, logo_render, id2name, country_code_name
-from config import Date_col, Lounge_ID_Col, CL_ID_Col, Volume_ID_Col,  users, Airport_Name_Col, City_Name_Col, Country_Name_Col, secret_key
+from flask import Flask, render_template, request, redirect, session, jsonify, url_for, send_from_directory
+from utils import load_data, filter_data_by_cl, dropdown_menu_filter, LoungeCounter, stream_on_off, active_inactive_lounges, active_clients_percent, volume_rate, filter_unique_val, lounge_crowdedness, get_notifications, ParameterCounter, crowdedness_alert, range_filter, plot_arranger, update_time_alert, update_plot_interval, column_sum, plot_interval_handler, airport_loc, fetch_wikipedia_summary, logo_render
+from config import Date_col, Lounge_ID_Col, CLName_Col, Volume_ID_Col,  users, Airport_Name_Col, City_Name_Col, Country_Name_Col
 from authentication import Authentication
-from database import load_data_2
 import numpy as np
 import pandas as pd
 from plotter import Plotter
@@ -17,7 +16,8 @@ authenticate = Authentication().authenticate
 
 
 app = Flask(__name__)
-app.secret_key =  secret_key
+app.secret_key = "!241$gc"
+
 
 @app.route('/', methods=['GET'])
 def index():
@@ -34,10 +34,10 @@ def login():
             session["username"] = username
             return redirect('/home')
         else:
-            return render_template("login.html", logo_path = logo_render('IEG', only_filename=True ),
+            return render_template("login.html", logo_path = logo_render('Login_page', only_filename=True ),
                                     error="Invalid username or password")
     return render_template("login.html", 
-                           logo_path = logo_render('IEG', only_filename=True ))
+                           logo_path = logo_render('Login_page', only_filename=True ))
 
 @app.route('/home', methods=['GET','POST'])
 def home():
@@ -48,8 +48,7 @@ def home():
     if client_name:
         return redirect(url_for('dashboard', client=client_name))
     
-    # df = load_data()
-    df = load_data_2()
+    df = load_data()
 
     username = session["username"]
     access_clients = users[username]["AccessCL"]
@@ -87,6 +86,7 @@ def update_plot():
 
     username = session["username"]
     access_clients = users[username]["AccessCL"]
+    df = load_data()
 
 
     try:
@@ -108,7 +108,7 @@ def update_plot():
     try:
         selected_client_order = request.form['client_order']
     except:
-        selected_client_order = ''
+        selected_client_order = 'alert'
         
 
     selected_start_date = request.form['start_date']
@@ -117,15 +117,6 @@ def update_plot():
     # print('selected_date', selected_start_date)
     update_time_alert(time_alert)
     update_plot_interval(plot_interval)
-   
-    # df = load_data()
-
-    df = load_data_2()
-    # df2 = load_data_2(
-    #                 from_time= selected_start_date,
-    #                 to_time= selected_end_date
-    #                   )
-    # print('df2',df2)
 
     if selected_start_date != '' or selected_end_date!= '':
         df = range_filter(df, pd.to_datetime(selected_start_date),pd.to_datetime(selected_end_date),Date_col)
@@ -151,8 +142,8 @@ def update_plot():
         airport_num = 0
 
         if selected_client:
-            df = dropdown_menu_filter(df,CL_ID_Col ,selected_client)
-            airport_list, airport_num = ParameterCounter(name = selected_client, base= CL_ID_Col, to_be_counted= Airport_Name_Col)
+            df = dropdown_menu_filter(df,CLName_Col ,selected_client)
+            airport_list, airport_num = ParameterCounter(name = selected_client, base= CLName_Col, to_be_counted= Airport_Name_Col)
 
             # lounge_num = LoungeCounter(name = str(selected_client))
             
@@ -162,8 +153,8 @@ def update_plot():
            
             # modality can be 'lg' or'cl'
             if selected_client == '':
-                lounge_num, selected_client  = LoungeCounter(name = selected_lounge, modality='lg')
-                airport_list, airport_num = ParameterCounter(name = selected_client, base= CL_ID_Col, to_be_counted= Airport_Name_Col)
+                lounge_num, selected_client  = LoungeCounter(name = str(selected_lounge), modality='lg')
+                airport_list, airport_num = ParameterCounter(name = selected_client, base= CLName_Col, to_be_counted= Airport_Name_Col)
         
         if selected_airport:
 
@@ -234,8 +225,8 @@ def update_plot():
         }
 
         
-        if selected_client in list(no_data_dict.keys()):
-            error_message = f"Last update {no_data_dict[selected_client]}"
+        if str(selected_client) in list(no_data_dict.keys()):
+            error_message = f"Last update {no_data_dict[str(selected_client)]}"
         else:
             error_message = None
         
@@ -295,9 +286,10 @@ def update_plot():
             cl_data = ''
 
 
-
+        print('my df is: ', df)
+        print('access_clients', access_clients, type(access_clients),'selected_client_order:', selected_client_order)
         #0.08 seconds
-        clients = plot_arranger(df,access_clients,selected_client_order, optional=['day',time_alert],plot_interval=plot_interval, extra_data=cl_data)
+        clients = plot_arranger(df, access_clients, selected_client_order, optional = ['day',time_alert], plot_interval = plot_interval, extra_data = cl_data)
         image_list=[]
         
         temp_cl_list = clients[:]
@@ -322,25 +314,26 @@ def update_plot():
 
             else:
 
-                if client in active_lounges:
-                    actives = len(active_lounges[client])
+                if str(client) in active_lounges:
+                    actives = len(active_lounges[str(client)])
                 else:
                     actives = 0
                 if client in inactive_lounges:
-                    inactives = len(inactive_lounges[client])
+                    inactives = len(inactive_lounges[str(client)])
                 else:
                     inactives = 0
-                airport_list, airport_num = ParameterCounter(name = client, base= CL_ID_Col, to_be_counted= Airport_Name_Col)
+                airport_list, airport_num = ParameterCounter(name = client, base= CLName_Col, to_be_counted= Airport_Name_Col)
  
-                if client in list(no_data_dict.keys()):
-                    no_data_error = f"Last update {no_data_dict[client]}"
+                if str(client) in list(no_data_dict.keys()):
+                    no_data_error = f"Last update {no_data_dict[str(client)]}"
                 else:
                     no_data_error = None
                 
-                plt_title = f'{id2name(id=client)}, Lounge {actives}/{actives + inactives}, AP No. {airport_num}'
+                plt_title = f'{client}, Lounge {actives}/{actives + inactives}, AP No. {airport_num}'
                 background_color = None
             
-
+           
+            
             pltr = Plotter(date_list, vol_sum_list, plt_title , plt_thickness= plt_thickness ,xlabel='',  ylabel='Passengers',growth_rate=growth_rate, no_data_error= no_data_error, 
                            client= client, plot_gradient_intensity=plot_gradient_intensity, background_color=background_color)
             # ss1 = time.time()
@@ -353,6 +346,7 @@ def update_plot():
             # print(client,'latency in second:', ee2 - ss2)
 
 
+        
         
         
         return jsonify({'image':True,
@@ -406,23 +400,11 @@ def dashboard_lounge(client):
     username = session["username"]
     access_clients = users[username]["AccessCL"]
     
-    if str(client) not in access_clients:
-        try:
-            if int(client) not in access_clients:
-                return redirect('/home')
-        except:
-            return redirect('/home')
-   
-    try:
-        client = int(client)
-    except:
-        client = str(client)
-    client_name = id2name(id = client)
-
-    # df = load_data()
-    df = load_data_2()
+    if client not in access_clients:
+        return redirect('/home')
     
-    filtered_df = dropdown_menu_filter(df,CL_ID_Col ,client)
+    df = load_data()
+    filtered_df = dropdown_menu_filter(df,CLName_Col ,client)
 
     cl_lounges_ = filter_unique_val(filtered_df, 'lounges')
     airport_uq_list = filter_unique_val(filtered_df,'airport') #return an array
@@ -436,9 +418,9 @@ def dashboard_lounge(client):
     setting = {'time_alert':np.arange(2,7), 'plot_interval':np.arange(2,7)}
 
     file_name = convert_to_secure_name(client)
-    
+
      
-    return render_template('lounge_monitor.html', client= client_name,cl_lounges_= cl_lounges_, 
+    return render_template('lounge_monitor.html', client= client,cl_lounges_= cl_lounges_, 
                            airports = airport_uq_list, cities = city_uq_list, countries = country_uq_list,
                             setting=setting, logo_file_name=file_name, logo_path = logo_render(users[username]["ClientID"], only_filename=True ))  
 
@@ -450,21 +432,11 @@ def dashboard_airport(client):
     username = session["username"]
     access_clients = users[username]["AccessCL"]
     
-    if str(client) not in access_clients:
-        try:
-            if int(client) not in access_clients:
-                return redirect('/home')
-        except:
-            return redirect('/home')
+    if client not in access_clients:
+        return redirect('/home')
     
-    try:
-        client = int(client)
-    except:
-        client = str(client)
-    client_name = id2name(id = client)
-    # df = load_data()
-    df = load_data_2()
-    filtered_df = dropdown_menu_filter(df,CL_ID_Col ,client)
+    df = load_data()
+    filtered_df = dropdown_menu_filter(df,CLName_Col ,client)
 
     airport_uq_list = filter_unique_val(filtered_df,'airport') #return an array
 
@@ -476,8 +448,9 @@ def dashboard_airport(client):
     file_name = convert_to_secure_name(client)
     airport_locs = airport_loc(client, airport_uq_list)
     airport_locs = Markup(airport_locs)
+
      
-    return render_template('airport_monitor.html', client= client_name, 
+    return render_template('airport_monitor.html', client= client, 
                            airports = list(airport_uq_list),  
                            logo_file_name=file_name, airport_locs=airport_locs,
                             logo_path = logo_render(client, only_filename=True ))  
@@ -494,33 +467,23 @@ def update_airports():
 
 @app.route('/dashboard/<client>', methods=['GET'])
 def dashboard(client):
+    
     if 'username' not in session:
         return redirect('/login')
     
     username = session["username"]
     access_clients = users[username]["AccessCL"]
-   
-    try:
-        client = int(client)
-    except:
-        client = str(client)
-
-    client_name = id2name(id = client)
-
-    if str(client) not in access_clients:
-        try:
-            if int(client) not in access_clients:
-                return redirect('/home')
-        except:
-            return redirect('/home')
     
-    # df = load_data()
-    df = load_data_2()
-    filtered_df = dropdown_menu_filter(df,CL_ID_Col ,client)
+    if client not in access_clients:
+        return redirect('/home')
+    
+    df = load_data()
+    filtered_df = dropdown_menu_filter(df,CLName_Col ,client)
 
     cl_lounges_ = filter_unique_val(filtered_df, 'lounges')
     # airport_uq_list = filter_unique_val(filtered_df,'airport') #return an array
     airport_uq_dict = ParameterCounter(name=None,base=Airport_Name_Col, to_be_counted = Lounge_ID_Col, df=filtered_df)
+    
     city_uq_list = filter_unique_val(filtered_df, 'city') #return an array
     country_uq_list = filter_unique_val(filtered_df, 'country')
 
@@ -539,12 +502,11 @@ def dashboard(client):
     # volume_rates, vol_curr, vol_prev = volume_rate(access_clients, amount=7)
     if client in inactive_lounges:
         inact_lg_list = list(inactive_lounges[client])
-        
     else:
         inact_lg_list = None
 
     stat_list = [inact_lg_list, crowdedness]
-    return render_template('dashboard.html', client= client,client_name= client_name,cl_lounges_= cl_lounges_, 
+    return render_template('dashboard.html', client= client,cl_lounges_= cl_lounges_, 
                            airports = airport_uq_dict, cities = city_uq_list, countries = country_uq_list,
                              stats=stat_list, setting=setting, logo_file_name = file_name, cities_dict=cities_dict,
                              logo_path = logo_render(users[username]["ClientID"], only_filename=True ))
@@ -554,15 +516,9 @@ def update_dashboard():
     
     username = session["username"]
     access_clients = users[username]["AccessCL"]
-    # df = load_data()
-    df = load_data_2()
+    df = load_data()
     
     client = request.form['client']
-    try:
-        client = int(client)
-    except:
-        client = str(client)
-        
     page_user = request.form['page_user']
 
     selected_lounge = request.form['lounge_name']
@@ -595,11 +551,6 @@ def update_dashboard():
     update_time_alert(time_alert)
     update_plot_interval(plot_interval)
 
-    # df2 = load_data_2(
-    #                 from_time= selected_start_date,
-    #                 to_time= selected_end_date
-    #                   )
-    # print('df2',df2)
     if selected_start_date != '' or selected_end_date!= '':
         df = range_filter(df, pd.to_datetime(selected_start_date),pd.to_datetime(selected_end_date),Date_col)
     
@@ -609,7 +560,7 @@ def update_dashboard():
 
 
 
-    filtered_df = dropdown_menu_filter(df, CL_ID_Col, client)
+    filtered_df = dropdown_menu_filter(df, CLName_Col, client)
     
     lg_list = filter_unique_val(filtered_df, 'lounges')
 
@@ -675,8 +626,8 @@ def update_dashboard():
         vol_sum_list = lg_info[lounge][1]
         lg_growth_rate = lg_info[lounge][2]    
         
-        if lounge in list(no_data_dict.keys()):
-            no_data_error = f"Last update {no_data_dict[lounge]}"
+        if str(lounge) in list(no_data_dict.keys()):
+            no_data_error = f"Last update {no_data_dict[str(lounge)]}"
         else:
             no_data_error = None
         
@@ -711,16 +662,12 @@ def update_map():
     
     username = session["username"]
     access_clients = users[username]["AccessCL"]
-    df = load_data_2()
+    df = load_data()
     
     selected_start_date = request.form['start_date']
-    
-    # df2 = load_data_2(
-    #                 from_time = selected_start_date
-    #                   )
-    # print('df2',df2)
+    # print('in map js',selected_start_date)
     if selected_start_date != '':
-        df = range_filter(df, pd.to_datetime(selected_start_date), None, Date_col)
+        df = range_filter(df, pd.to_datetime(selected_start_date),None,Date_col)
 
 
     username = session["username"]
@@ -730,11 +677,6 @@ def update_map():
 
     #number of passengers not the received data records
     country_rates = column_sum(df, Country_Name_Col, Volume_ID_Col)
-    for i in country_rates:
-        
-        key = i['name']        
-        new_key = country_code_name(key)
-        i['name'] = new_key
 
     return jsonify({'country_uq_dict': country_rates})
 
