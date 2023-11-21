@@ -1,12 +1,12 @@
-Date_col ='Date_Time'
-CLName_Col = 'CLIENT_NAME'
-Lounge_ID_Col = 'Lounge_name'
-Volume_ID_Col = 'PAX_Accept'
-Airport_Name_Col = 'Airport_Code'
-Country_Name_Col = 'Country'
-City_Name_Col = 'City'
-Refuse_Col='PAX_Reject'
-Ratio_Col='REF2ALW'
+Date_col ='a'
+CLName_Col = 'b'
+Lounge_ID_Col = 'c'
+Volume_ID_Col = 'd'
+Airport_Name_Col = 'e'
+Country_Name_Col = 'f'
+City_Name_Col = 'g'
+Refuse_Col='h'
+Ratio_Col='i'
 
 
 
