@@ -19,22 +19,8 @@ plot_gradient_intensity = 0.5
 num_samples_gradient = 200
 
 users = {
-    "IEG": {"password": "pass", "ClientID": 'IEG', 'AccessCL':['STR', 'AC','AV','EK1','LH','LX','UA1']},
-    "STR": {"password": "pass", "ClientID": 'STR', 'AccessCL':['STR', 'AC','AV','EK1','LH']},
-    "AC": {"password": "pass", "ClientID": 'AC', 'AccessCL':['AC']},
-    "LH": {"password": "pass", "ClientID": 'LH', 'AccessCL':['LH','LX']},
+    "user1": {"password": "pass", "ClientID": 'user1', 'AccessCL':['user1']},
+    "user2": {"password": "pass", "ClientID": 'user2', 'AccessCL':['user2']},
+    "user3": {"password": "pass", "ClientID": 'user3', 'AccessCL':['user3']},
 }
 
-# Date_col ='DATE_UTC'
-# CLName_Col = 'CLIENT_NAME'
-# Lounge_ID_Col = 'lounge_name'
-# Volume_ID_Col = 'COUNT_PAX_ALLOWED'
-# Refuse_Col='COUNT_PAX_REFUSED'
-# Ratio_Col='REF2ALW'
-# users = {
-#     "admin": {"password": "admin", "ClientID": 'admin', 'AccessCL':['LH','LX', 'MAG']},
-
-#     "user1": {"password": "pass", "ClientID": 1 , 'AccessCL':['MAG','LX']},
-#     "user2": {"password": "pass", "ClientID": 2, 'AccessCL':['LH']},
-#     "user3": {"password": "pass", "ClientID": 3, 'AccessCL':['LX']},
-# }
